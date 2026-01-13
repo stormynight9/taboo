@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import "./globals.css";
 import { ConvexClientProvider } from "./ConvexClientProvider";
+import { Analytics } from "@vercel/analytics/next";
 
 const fredoka = Fredoka({
   variable: "--font-fredoka",
@@ -31,6 +32,7 @@ export default function RootLayout({
       >
         <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
+      <Analytics />
     </html>
   );
 }
