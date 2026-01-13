@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #0f0f1a;
+  --foreground: #f0f0f5;
+  --red-team: #e63946;
+  --red-team-dark: #b32d38;
+  --blue-team: #457b9d;
+  --blue-team-dark: #2d5a73;
+  --accent: #f4a261;
+  --accent-dark: #d68c4a;
+  --card-bg: #1a1a2e;
+  --card-border: #2a2a4a;
+  --success: #2ecc71;
+  --danger: #e74c3c;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: #0f0f1a;
+  --color-foreground: #f0f0f5;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background-color: #0f0f1a;
 }
 
 body {
-  background: var(--background);
+  background-color: #0f0f1a !important;
+  color: #f0f0f5;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  min-height: 100vh;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* Animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(244, 162, 97, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(244, 162, 97, 0.6);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-shake {
+  animation: shake 0.3s ease-in-out;
+}
+
+/* Team colors */
+.team-red {
+  background: var(--red-team);
+}
+
+.team-red-border {
+  border-color: var(--red-team);
+}
+
+.team-blue {
+  background: var(--blue-team);
+}
+
+.team-blue-border {
+  border-color: var(--blue-team);
+}
+
+/* Card styles */
+.game-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+}
+
+/* Button styles */
+.btn-primary {
+  background: var(--accent);
+  color: var(--background);
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--accent-dark);
+  transform: translateY(-2px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+/* Input styles */
+.game-input {
+  background: var(--card-bg);
+  border: 2px solid var(--card-border);
+  border-radius: 12px;
+  padding: 12px 16px;
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  transition: border-color 0.2s ease;
+}
+
+.game-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.game-input::placeholder {
+  color: #666;
 }
