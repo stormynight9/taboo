@@ -23,7 +23,7 @@ export default function WordCard({
   return (
     <div className="game-card overflow-hidden animate-slide-up">
       {/* Main Word */}
-      <div className="bg-amber-500 p-6 md:p-8 text-center">
+      <div className="bg-pink-500 p-6 md:p-8 text-center">
         <p className="text-xs uppercase tracking-wider text-gray-900 opacity-75 mb-2">
           Describe this word
         </p>
@@ -35,15 +35,15 @@ export default function WordCard({
       {/* Taboo Words */}
       <div className="p-4 md:p-6">
         <p className="text-xs uppercase tracking-wider text-red-400 mb-3 text-center">
-          ⛔ Don't say these words
+          ⛔ Don&apos;t say these words
         </p>
         <div className="space-y-2">
           {tabooWords.map((tabooWord, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 px-4 py-2 bg-gray-900 rounded-lg border border-red-500/30"
+              className="flex items-center gap-3 px-4 py-2  rounded-lg border border-red-500/50"
             >
-              <span className="text-red-400 font-bold">✕</span>
+              <span className="text-red-400 font-semibold">✕</span>
               <span className="font-medium text-white">{tabooWord}</span>
             </div>
           ))}

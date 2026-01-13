@@ -9,6 +9,7 @@ import TeamScores from "./TeamScores";
 import GuessChat from "./GuessChat";
 import BuzzerButton from "./BuzzerButton";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 interface GameBoardProps {
   room: Doc<"rooms">;
@@ -69,7 +70,7 @@ export default function GameBoard({
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="game-card p-8 md:p-12 text-center max-w-lg">
-          <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+          <h1 className="text-4xl md:text-5xl font-semibold mb-6 text-white">
             {winner === "tie" ? (
               "It's a Tie! 🤝"
             ) : winner === "red" ? (
@@ -82,19 +83,23 @@ export default function GameBoard({
           <div className="flex items-center justify-center gap-8 mb-8">
             <div className="text-center">
               <p className="text-sm text-white font-semibold">RED</p>
-              <p className="text-5xl font-bold text-white">{room.scores.red}</p>
+              <p className="text-5xl font-semibold text-white">
+                {room.scores.red}
+              </p>
             </div>
             <span className="text-2xl text-gray-400">-</span>
             <div className="text-center">
               <p className="text-sm text-white font-semibold">BLUE</p>
-              <p className="text-5xl font-bold text-white">
+              <p className="text-5xl font-semibold text-white">
                 {room.scores.blue}
               </p>
             </div>
           </div>
 
-          <Link href="/" className="btn-primary inline-block">
-            Play Again
+          <Link href="/">
+            <Button variant="default" size="lg">
+              Play Again
+            </Button>
           </Link>
         </div>
       </div>
@@ -114,18 +119,9 @@ export default function GameBoard({
 
   return (
     <div className="min-h-screen p-4 md:p-6">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div
-          className={`absolute top-1/4 left-1/4 w-96 h-96 ${
-            room.currentTeam === "red" ? "bg-red-500" : "bg-blue-500"
-          } opacity-5 rounded-full blur-3xl transition-colors duration-500`}
-        />
-      </div>
-
       <div className="max-w-6xl mx-auto relative z-10 space-y-4 md:space-y-6">
         {/* Header with Timer and Scores */}
-        <div className="grid md:grid-cols-3 gap-4 items-start">
+        <div className="grid md:grid-cols-3 gap-4 items-stretch">
           {/* Scores */}
           <div className="md:order-1">
             <TeamScores
@@ -138,19 +134,19 @@ export default function GameBoard({
           </div>
 
           {/* Timer */}
-          <div className="md:order-2">
+          <div className="md:order-2 flex items-center justify-center">
             <Timer endTime={room.turnEndTime} />
           </div>
 
           {/* Current Turn Info */}
-          <div className="game-card p-4 md:order-3">
+          <div className="game-card p-4 md:order-3 flex items-center justify-center">
             <div className="text-center">
               <p className="text-xs uppercase tracking-wider text-gray-400 mb-1">
                 Explainer
               </p>
-              <p className="text-xl font-bold text-white">
+              <p className="text-xl font-semibold text-white">
                 {explainer?.name || "Unknown"}
-                {isExplainer && <span className="text-amber-400"> (You!)</span>}
+                {isExplainer && <span className="text-pink-500"> (You!)</span>}
               </p>
               <p className="text-sm mt-1 text-white">
                 {room.currentTeam === "red" ? "🔴 Red Team" : "🔵 Blue Team"}
@@ -163,7 +159,7 @@ export default function GameBoard({
         <div
           className={`text-center py-3 px-4 rounded-lg ${
             isExplainer
-              ? "bg-amber-500/20 border border-amber-500"
+              ? "bg-pink-500/20 border border-pink-500"
               : isOnCurrentTeam
               ? room.currentTeam === "red"
                 ? "bg-red-500/20 border border-red-500"
@@ -173,7 +169,7 @@ export default function GameBoard({
         >
           {!turnStarted ? (
             isExplainer ? (
-              <p className="font-semibold text-amber-400">
+              <p className="font-semibold text-pink-500">
                 ⏸️ It&apos;s your turn! Click &quot;Start Turn&quot; to begin.
               </p>
             ) : (
@@ -208,24 +204,21 @@ export default function GameBoard({
             {isExplainer ? (
               <div className="game-card p-8 md:p-12 text-center max-w-md">
                 <div className="text-6xl mb-6">🎯</div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
                   Your Turn to Explain!
                 </h2>
                 <p className="text-gray-400 mb-6">
                   {room.currentTeam === "red" ? "🔴 Red Team" : "🔵 Blue Team"}{" "}
                   - Round {room.currentRound}
                 </p>
-                <button
-                  onClick={handleStartTurn}
-                  className="btn-primary text-xl px-12 py-4 animate-pulse-glow"
-                >
+                <Button onClick={handleStartTurn} size="lg">
                   ▶️ Start Turn
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="game-card p-8 md:p-12 text-center max-w-md">
                 <div className="text-6xl mb-6">⏸️</div>
-                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
                   Waiting for Turn to Start
                 </h2>
                 <p className="text-gray-400">
@@ -251,12 +244,14 @@ export default function GameBoard({
                   <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
                     Explainer Controls
                   </p>
-                  <button
+                  <Button
                     onClick={handleSkip}
-                    className="w-full py-3 rounded-lg bg-gray-600 hover:bg-gray-500 text-white font-semibold transition-colors"
+                    variant="outline"
+                    size="lg"
+                    className="w-full"
                   >
                     ⏭️ Skip Word
-                  </button>
+                  </Button>
                 </div>
               )}
 
@@ -292,7 +287,7 @@ export default function GameBoard({
                         key={p._id}
                         className={`text-sm ${
                           i === explainerIndex % currentTeamPlayers.length
-                            ? "text-amber-400 font-semibold"
+                            ? "text-pink-500 font-semibold"
                             : "text-gray-300"
                         }`}
                       >

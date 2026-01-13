@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
 
 interface GuessChatProps {
   roomId: Id<"rooms">;
@@ -82,7 +83,7 @@ export default function GuessChat({
                 }`}
               >
                 {!isLogMessage && (
-                  <span className="font-semibold text-amber-400 shrink-0">
+                  <span className="font-semibold text-pink-500 shrink-0">
                     {g.playerName}:
                   </span>
                 )}
@@ -120,17 +121,13 @@ export default function GuessChat({
               onChange={(e) => setGuess(e.target.value)}
               autoComplete="off"
             />
-            <button
-              type="submit"
-              disabled={!guess.trim()}
-              className="btn-primary py-2 px-4 text-sm disabled:opacity-50"
-            >
+            <Button type="submit" disabled={!guess.trim()} variant="default">
               Send
-            </button>
+            </Button>
           </div>
         </form>
       ) : (
-        <div className="p-3 border-t border-[var(--card-border)] text-center text-gray-500 text-sm">
+        <div className="p-3 border-t border-[var(--card-border)] text-center text-gray-500 text-sm mt-auto">
           Only the guessing team can submit answers
         </div>
       )}

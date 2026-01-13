@@ -7,6 +7,7 @@ import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
 import Lobby from "../../../components/Lobby";
 import GameBoard from "../../../components/GameBoard";
+import { Button } from "@/components/ui/button";
 
 function generateSessionId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -103,15 +104,17 @@ export default function RoomPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="game-card p-8 text-center space-y-4">
-          <h1 className="text-2xl font-bold text-red-400">Room Not Found</h1>
+          <h1 className="text-2xl font-semibold text-red-400">
+            Room Not Found
+          </h1>
           <p className="text-gray-400">
             The room code{" "}
-            <span className="font-mono text-amber-400">{code}</span> doesn't
+            <span className="font-mono text-pink-500">{code}</span> doesn&apos;t
             exist.
           </p>
-          <button onClick={() => router.push("/")} className="btn-primary">
+          <Button onClick={() => router.push("/")} variant="default">
             Go Home
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -121,14 +124,9 @@ export default function RoomPage() {
   if (!playerId && !currentPlayer) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="fixed inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500 opacity-5 rounded-full blur-3xl" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 opacity-5 rounded-full blur-3xl" />
-        </div>
-
         <div className="game-card p-8 w-full max-w-md relative z-10">
-          <h1 className="text-2xl font-bold text-center mb-2 text-white">
-            Join Room <span className="text-amber-400">{code}</span>
+          <h1 className="text-2xl font-semibold text-center mb-2 text-white">
+            Join Room <span className="text-pink-500">{code}</span>
           </h1>
           <p className="text-gray-400 text-center mb-6">
             Enter your name to join the game
@@ -154,13 +152,15 @@ export default function RoomPage() {
               <p className="text-red-400 text-sm text-center">{joinError}</p>
             )}
 
-            <button
+            <Button
               type="submit"
               disabled={isJoining}
-              className="btn-primary w-full disabled:opacity-50"
+              variant="default"
+              size="lg"
+              className="w-full"
             >
               {isJoining ? "Joining..." : "Join Room"}
-            </button>
+            </Button>
           </form>
         </div>
       </div>

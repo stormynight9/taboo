@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../convex/_generated/api";
 import { Id } from "../convex/_generated/dataModel";
+import { Button } from "@/components/ui/button";
 
 interface BuzzerButtonProps {
   roomId: Id<"rooms">;
@@ -34,15 +35,13 @@ export default function BuzzerButton({
   };
 
   return (
-    <button
+    <Button
       onClick={handleBuzz}
       disabled={!canBuzz || isPressed}
-      className={`w-full py-6 rounded-xl font-bold text-xl uppercase tracking-wider transition-all text-white ${
-        canBuzz
-          ? isPressed
-            ? "bg-red-600 scale-95"
-            : "bg-red-600 hover:bg-red-700 hover:scale-105 active:scale-95"
-          : "bg-gray-600 opacity-50 cursor-not-allowed"
+      variant="destructive"
+      size="lg"
+      className={`w-full uppercase tracking-wider ${
+        isPressed ? "scale-95" : ""
       }`}
     >
       {isPressed ? (
@@ -53,6 +52,6 @@ export default function BuzzerButton({
       ) : (
         <>🚨 TABOO!</>
       )}
-    </button>
+    </Button>
   );
 }

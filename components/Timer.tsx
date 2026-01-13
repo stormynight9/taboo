@@ -38,8 +38,8 @@ export default function Timer({ endTime }: TimerProps) {
       }`}
     >
       <div
-        className={`text-6xl md:text-7xl font-mono font-bold tabular-nums ${
-          isCritical ? "text-red-500" : isLow ? "text-amber-400" : "text-white"
+        className={`text-6xl md:text-7xl font-mono font-semibold tabular-nums ${
+          isCritical ? "text-red-500" : isLow ? "text-pink-500" : "text-white"
         }`}
       >
         {minutes}:{seconds.toString().padStart(2, "0")}

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 
 function generateSessionId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -63,17 +66,11 @@ export default function CreateRoom() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-red-500 opacity-5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500 opacity-5 rounded-full blur-3xl" />
-      </div>
-
       <main className="relative z-10 w-full max-w-md">
         {/* Back link */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2 text-gray-400 hover:text-amber-400 mb-8 transition-colors"
+          className="inline-flex items-center gap-2 text-gray-400 hover:text-pink-500 mb-8 transition-colors"
         >
           <svg
             className="w-5 h-5"
@@ -91,23 +88,22 @@ export default function CreateRoom() {
           Back to Home
         </Link>
 
-        <div className="game-card p-8">
-          <h1 className="text-3xl font-bold mb-8 text-center text-white">
-            Create a <span className="text-amber-400">Room</span>
+        <div className="game-card p-8 md:p-10">
+          <h1 className="text-3xl md:text-4xl font-semibold mb-8 text-center text-white">
+            Create a <span className="text-pink-500">Room</span>
           </h1>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Host Name */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-white">
                 Your Name
               </label>
-              <input
+              <Input
                 type="text"
                 required
                 maxLength={20}
-                placeholder="Alex"
-                className="game-input w-full"
+                placeholder="Jared"
                 value={formData.hostName}
                 onChange={(e) =>
                   setFormData({ ...formData, hostName: e.target.value })
@@ -116,76 +112,77 @@ export default function CreateRoom() {
             </div>
 
             {/* Number of Rounds */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-white">
                 Number of Rounds
               </label>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
+                <Slider
                   min={1}
                   max={10}
-                  className="flex-1 accent-amber-500"
-                  value={formData.rounds}
-                  onChange={(e) =>
+                  step={1}
+                  value={[formData.rounds]}
+                  onValueChange={(values) =>
                     setFormData({
                       ...formData,
-                      rounds: parseInt(e.target.value),
+                      rounds: Array.isArray(values) ? values[0] : values,
                     })
                   }
+                  className="flex-1"
                 />
-                <span className="w-8 text-center font-bold text-amber-400">
+                <span className="w-12 text-center font-semibold text-pink-500 text-lg">
                   {formData.rounds}
                 </span>
               </div>
             </div>
 
             {/* Turn Time */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-white">
                 Turn Time (seconds)
               </label>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
+                <Slider
                   min={30}
                   max={180}
                   step={10}
-                  className="flex-1 accent-amber-500"
-                  value={formData.turnTime}
-                  onChange={(e) =>
+                  value={[formData.turnTime]}
+                  onValueChange={(values) =>
                     setFormData({
                       ...formData,
-                      turnTime: parseInt(e.target.value),
+                      turnTime: Array.isArray(values) ? values[0] : values,
                     })
                   }
+                  className="flex-1"
                 />
-                <span className="w-12 text-center font-bold text-amber-400">
+                <span className="w-16 text-center font-semibold text-pink-500 text-lg">
                   {formData.turnTime}s
                 </span>
               </div>
             </div>
 
             {/* Taboo Word Count */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-white">
                 Taboo Words per Card
               </label>
               <div className="flex items-center gap-4">
-                <input
-                  type="range"
+                <Slider
                   min={1}
                   max={5}
-                  className="flex-1 accent-amber-500"
-                  value={formData.tabooWordCount}
-                  onChange={(e) =>
+                  step={1}
+                  value={[formData.tabooWordCount]}
+                  onValueChange={(values) =>
                     setFormData({
                       ...formData,
-                      tabooWordCount: parseInt(e.target.value),
+                      tabooWordCount: Array.isArray(values)
+                        ? values[0]
+                        : values,
                     })
                   }
+                  className="flex-1"
                 />
-                <span className="w-8 text-center font-bold text-amber-400">
+                <span className="w-12 text-center font-semibold text-pink-500 text-lg">
                   {formData.tabooWordCount}
                 </span>
               </div>
@@ -196,13 +193,15 @@ export default function CreateRoom() {
             )}
 
             {/* Submit Button */}
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="default"
+              size="lg"
+              className="w-full"
             >
               {isLoading ? "Creating..." : "Create Room"}
-            </button>
+            </Button>
           </form>
         </div>
       </main>

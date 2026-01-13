@@ -1,36 +1,24 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0f0f1a;
+  --background: #18181b;
   --foreground: #f0f0f5;
   --red-team: #e63946;
   --red-team-dark: #b32d38;
   --blue-team: #457b9d;
   --blue-team-dark: #2d5a73;
-  --accent: #f4a261;
-  --accent-dark: #d68c4a;
-  --card-bg: #1a1a2e;
-  --card-border: #2a2a4a;
+  --accent: #ec4899;
+  --accent-dark: #db2777;
+  --card-bg: #27272a;
+  --card-border: #3f3f46;
   --success: #2ecc71;
   --danger: #e74c3c;
 }
 
-@theme inline {
-  --color-background: #0f0f1a;
-  --color-foreground: #f0f0f5;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-html {
-  background-color: #0f0f1a;
-}
-
 body {
-  background-color: #0f0f1a !important;
   color: #f0f0f5;
-  font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100vh;
+  font-family: var(--font-fredoka), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Custom scrollbar */
@@ -53,11 +41,12 @@ body {
 
 /* Animations */
 @keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(244, 162, 97, 0.3);
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
   }
   50% {
-    box-shadow: 0 0 40px rgba(244, 162, 97, 0.6);
+    box-shadow: 0 0 40px rgba(236, 72, 153, 0.6);
   }
 }
 
@@ -73,9 +62,16 @@ body {
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
 }
 
 .animate-pulse-glow {
@@ -114,39 +110,6 @@ body {
   border-radius: 16px;
 }
 
-/* Button styles */
-.btn-primary {
-  background: var(--accent);
-  color: var(--background);
-  font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.btn-primary:hover {
-  background: var(--accent-dark);
-  transform: translateY(-2px);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-danger {
-  background: var(--danger);
-  color: white;
-  font-weight: 600;
-  padding: 12px 24px;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.btn-danger:hover {
-  opacity: 0.9;
-  transform: translateY(-2px);
-}
-
 /* Input styles */
 .game-input {
   background: var(--card-bg);
@@ -165,3 +128,4 @@ body {
 .game-input::placeholder {
   color: #666;
 }
+
