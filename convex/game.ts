@@ -200,6 +200,10 @@ export const buzzTaboo = mutation({
       throw new Error("Game is not in progress");
     }
 
+    if (room.currentWord === null) {
+      throw new Error("Turn has not started yet");
+    }
+
     const player = await ctx.db.get(args.playerId);
     if (!player) throw new Error("Player not found");
 
@@ -215,6 +219,9 @@ export const buzzTaboo = mutation({
     } else {
       newScores.blue = Math.max(0, newScores.blue - 1);
     }
+
+    // Get the current word before it changes (for logging)
+    const currentWord = room.currentWord.word;
 
     // Get new word
     const wordData = await pickRandomWord(
@@ -240,7 +247,7 @@ export const buzzTaboo = mutation({
       roomId: args.roomId,
       playerId: args.playerId,
       playerName: player.name,
-      text: `🚨 ${player.name} buzzed for taboo violation!`,
+      text: `🚨 ${player.name} buzzed for taboo violation on "${currentWord}"!`,
       isCorrect: false,
       round: room.currentRound,
       timestamp: Date.now(),
@@ -257,6 +264,10 @@ export const skipWord = mutation({
     const room = await ctx.db.get(args.roomId);
     if (!room || room.status !== "playing") {
       throw new Error("Game is not in progress");
+    }
+
+    if (room.currentWord === null) {
+      throw new Error("Turn has not started yet");
     }
 
     // Get current team players to find explainer
@@ -348,7 +359,59 @@ export const endTurn = internalMutation({
       return;
     }
 
-    // Get new word for next turn
+    // Switch to next team/explainer but don't start the turn yet
+    // The explainer needs to click "Start Turn" to begin
+    await ctx.db.patch(args.roomId, {
+      currentTeam: nextTeam,
+      currentRound: newRound,
+      currentExplainerIndex: newExplainerIndex,
+      currentWord: null,
+      turnEndTime: null,
+      turnScheduleId: undefined,
+    });
+  },
+});
+
+export const startTurn = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room || room.status !== "playing") {
+      throw new Error("Game is not in progress");
+    }
+
+    // Get current team players to find explainer
+    const teamPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_room_and_team", (q) =>
+        q.eq("roomId", args.roomId).eq("team", room.currentTeam)
+      )
+      .collect();
+
+    const sortedTeamPlayers = teamPlayers.sort(
+      (a, b) => a.joinOrder - b.joinOrder
+    );
+    const explainerIndex =
+      room.currentTeam === "red"
+        ? room.currentExplainerIndex.red
+        : room.currentExplainerIndex.blue;
+    const explainer =
+      sortedTeamPlayers[explainerIndex % sortedTeamPlayers.length];
+
+    // Only the explainer can start the turn
+    if (!explainer || explainer._id !== args.playerId) {
+      throw new Error("Only the explainer can start the turn");
+    }
+
+    // Check if turn is already started
+    if (room.currentWord !== null) {
+      throw new Error("Turn has already started");
+    }
+
+    // Pick new word for this turn
     const wordData = await pickRandomWord(
       ctx,
       args.roomId,
@@ -358,7 +421,7 @@ export const endTurn = internalMutation({
 
     const turnEndTime = Date.now() + room.settings.turnTime * 1000;
 
-    // Schedule next turn end
+    // Schedule turn end
     const scheduleId = await ctx.scheduler.runAfter(
       room.settings.turnTime * 1000,
       internal.game.endTurn,
@@ -366,9 +429,6 @@ export const endTurn = internalMutation({
     );
 
     await ctx.db.patch(args.roomId, {
-      currentTeam: nextTeam,
-      currentRound: newRound,
-      currentExplainerIndex: newExplainerIndex,
       currentWord: {
         word: wordData.word,
         tabooWords: wordData.tabooWords,

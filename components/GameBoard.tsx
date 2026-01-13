@@ -22,6 +22,7 @@ export default function GameBoard({
   currentPlayerId,
 }: GameBoardProps) {
   const skipWord = useMutation(api.game.skipWord);
+  const startTurn = useMutation(api.game.startTurn);
 
   const currentPlayer = players.find((p) => p._id === currentPlayerId);
 
@@ -104,6 +105,13 @@ export default function GameBoard({
     await skipWord({ roomId: room._id, playerId: currentPlayerId });
   };
 
+  const handleStartTurn = async () => {
+    await startTurn({ roomId: room._id, playerId: currentPlayerId });
+  };
+
+  // Check if turn has started (currentWord is not null)
+  const turnStarted = room.currentWord !== null;
+
   return (
     <div className="min-h-screen p-4 md:p-6">
       {/* Background decoration */}
@@ -163,7 +171,18 @@ export default function GameBoard({
               : "bg-red-500/10 border border-red-400"
           }`}
         >
-          {isExplainer ? (
+          {!turnStarted ? (
+            isExplainer ? (
+              <p className="font-semibold text-amber-400">
+                ⏸️ It&apos;s your turn! Click &quot;Start Turn&quot; to begin.
+              </p>
+            ) : (
+              <p className="font-semibold text-white">
+                ⏸️ Waiting for {explainer?.name || "the explainer"} to start the
+                turn...
+              </p>
+            )
+          ) : isExplainer ? (
             <p className="font-semibold text-white">
               🎤 You are the EXPLAINER! Describe the word without using the
               taboo words.
@@ -183,92 +202,127 @@ export default function GameBoard({
         </div>
 
         {/* Main Game Area */}
-        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-          {/* Left Column: Word Card */}
-          <div className="space-y-4">
-            <WordCard
-              word={room.currentWord?.word || ""}
-              tabooWords={room.currentWord?.tabooWords || []}
-              showWord={canSeeWord}
-            />
-
-            {/* Explainer Controls */}
-            {isExplainer && (
-              <div className="game-card p-4">
-                <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
-                  Explainer Controls
+        {!turnStarted ? (
+          /* Waiting for turn to start */
+          <div className="flex items-center justify-center min-h-[400px]">
+            {isExplainer ? (
+              <div className="game-card p-8 md:p-12 text-center max-w-md">
+                <div className="text-6xl mb-6">🎯</div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                  Your Turn to Explain!
+                </h2>
+                <p className="text-gray-400 mb-6">
+                  {room.currentTeam === "red" ? "🔴 Red Team" : "🔵 Blue Team"}{" "}
+                  - Round {room.currentRound}
                 </p>
                 <button
-                  onClick={handleSkip}
-                  className="w-full py-3 rounded-lg bg-gray-600 hover:bg-gray-500 font-semibold transition-colors"
+                  onClick={handleStartTurn}
+                  className="btn-primary text-xl px-12 py-4 animate-pulse-glow"
                 >
-                  ⏭️ Skip Word
+                  ▶️ Start Turn
                 </button>
               </div>
-            )}
-
-            {/* Buzzer for opposing team */}
-            {isOnOpposingTeam && (
-              <BuzzerButton
-                roomId={room._id}
-                playerId={currentPlayerId}
-                canBuzz={canBuzz}
-              />
+            ) : (
+              <div className="game-card p-8 md:p-12 text-center max-w-md">
+                <div className="text-6xl mb-6">⏸️</div>
+                <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+                  Waiting for Turn to Start
+                </h2>
+                <p className="text-gray-400">
+                  {explainer?.name || "The explainer"} will start the turn
+                  soon...
+                </p>
+              </div>
             )}
           </div>
+        ) : (
+          <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+            {/* Left Column: Word Card */}
+            <div className="space-y-4">
+              <WordCard
+                word={room.currentWord?.word || ""}
+                tabooWords={room.currentWord?.tabooWords || []}
+                showWord={canSeeWord}
+              />
 
-          {/* Right Column: Chat and Players */}
-          <div className="space-y-4">
-            <GuessChat
-              roomId={room._id}
-              playerId={currentPlayerId}
-              currentRound={room.currentRound}
-              canGuess={canGuess}
-            />
-
-            {/* Player Lists */}
-            <div className="grid grid-cols-2 gap-3">
-              {/* Guessing Team */}
-              <div className="game-card p-3">
-                <p className="text-xs font-semibold mb-2 text-white">
-                  {room.currentTeam === "red" ? "🔴" : "🔵"} Guessing
-                </p>
-                <div className="space-y-1">
-                  {currentTeamPlayers.map((p, i) => (
-                    <p
-                      key={p._id}
-                      className={`text-sm ${
-                        i === explainerIndex % currentTeamPlayers.length
-                          ? "text-amber-400 font-semibold"
-                          : "text-gray-300"
-                      }`}
-                    >
-                      {i === explainerIndex % currentTeamPlayers.length &&
-                        "🎤 "}
-                      {p.name}
-                      {p._id === currentPlayerId && " (You)"}
-                    </p>
-                  ))}
+              {/* Explainer Controls */}
+              {isExplainer && (
+                <div className="game-card p-4">
+                  <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
+                    Explainer Controls
+                  </p>
+                  <button
+                    onClick={handleSkip}
+                    className="w-full py-3 rounded-lg bg-gray-600 hover:bg-gray-500 text-white font-semibold transition-colors"
+                  >
+                    ⏭️ Skip Word
+                  </button>
                 </div>
-              </div>
+              )}
 
-              {/* Watching Team */}
-              <div className="game-card p-3">
-                <p className="text-xs font-semibold mb-2 text-white">
-                  {room.currentTeam === "red" ? "🔵" : "🔴"} Watching
-                </p>
-                <div className="space-y-1">
-                  {opposingTeamPlayers.map((p) => (
-                    <p key={p._id} className="text-sm text-gray-300">
-                      {p.name}
-                      {p._id === currentPlayerId && " (You)"}
-                    </p>
-                  ))}
+              {/* Buzzer for opposing team */}
+              {isOnOpposingTeam && (
+                <BuzzerButton
+                  roomId={room._id}
+                  playerId={currentPlayerId}
+                  canBuzz={canBuzz}
+                />
+              )}
+            </div>
+
+            {/* Right Column: Chat and Players */}
+            <div className="space-y-4">
+              <GuessChat
+                roomId={room._id}
+                playerId={currentPlayerId}
+                currentRound={room.currentRound}
+                canGuess={canGuess}
+              />
+
+              {/* Player Lists */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Guessing Team */}
+                <div className="game-card p-3">
+                  <p className="text-xs font-semibold mb-2 text-white">
+                    {room.currentTeam === "red" ? "🔴" : "🔵"} Guessing
+                  </p>
+                  <div className="space-y-1">
+                    {currentTeamPlayers.map((p, i) => (
+                      <p
+                        key={p._id}
+                        className={`text-sm ${
+                          i === explainerIndex % currentTeamPlayers.length
+                            ? "text-amber-400 font-semibold"
+                            : "text-gray-300"
+                        }`}
+                      >
+                        {i === explainerIndex % currentTeamPlayers.length &&
+                          "🎤 "}
+                        {p.name}
+                        {p._id === currentPlayerId && " (You)"}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Watching Team */}
+                <div className="game-card p-3">
+                  <p className="text-xs font-semibold mb-2 text-white">
+                    {room.currentTeam === "red" ? "🔵" : "🔴"} Watching
+                  </p>
+                  <div className="space-y-1">
+                    {opposingTeamPlayers.map((p) => (
+                      <p key={p._id} className="text-sm text-gray-300">
+                        {p.name}
+                        {p._id === currentPlayerId && " (You)"}
+                      </p>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
