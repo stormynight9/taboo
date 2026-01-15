@@ -8,7 +8,6 @@ import WordCard from "./WordCard";
 import TeamScores from "./TeamScores";
 import GuessChat from "./GuessChat";
 import BuzzerButton from "./BuzzerButton";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 interface GameBoardProps {
@@ -58,53 +57,9 @@ export default function GameBoard({
   // Who can buzz: opposing team
   const canBuzz = isOnOpposingTeam;
 
-  // Game finished
-  if (room.status === "finished") {
-    const winner =
-      room.scores.red > room.scores.blue
-        ? "red"
-        : room.scores.blue > room.scores.red
-        ? "blue"
-        : "tie";
-
-    return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="game-card p-8 md:p-12 text-center max-w-lg">
-          <h1 className="text-4xl md:text-5xl font-semibold mb-6 text-white">
-            {winner === "tie" ? (
-              "It's a Tie! 🤝"
-            ) : winner === "red" ? (
-              <span className="text-red-500">Red Team Wins! 🏆</span>
-            ) : (
-              <span className="text-blue-500">Blue Team Wins! 🏆</span>
-            )}
-          </h1>
-
-          <div className="flex items-center justify-center gap-8 mb-8">
-            <div className="text-center">
-              <p className="text-sm text-white font-semibold">RED</p>
-              <p className="text-5xl font-semibold text-white">
-                {room.scores.red}
-              </p>
-            </div>
-            <span className="text-2xl text-gray-400">-</span>
-            <div className="text-center">
-              <p className="text-sm text-white font-semibold">BLUE</p>
-              <p className="text-5xl font-semibold text-white">
-                {room.scores.blue}
-              </p>
-            </div>
-          </div>
-
-          <Link href="/">
-            <Button variant="default" size="lg">
-              Play Again
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Note: Game now automatically resets to lobby when finished,
+  // so the finished status should not be reached here.
+  // The results dialog is shown in the Lobby component.
 
   const handleSkip = async () => {
     await skipWord({ roomId: room._id, playerId: currentPlayerId });
@@ -198,122 +153,124 @@ export default function GameBoard({
         </div>
 
         {/* Main Game Area */}
-        {!turnStarted ? (
-          /* Waiting for turn to start */
-          <div className="flex items-center justify-center min-h-[400px]">
-            {isExplainer ? (
-              <div className="game-card p-8 md:p-12 text-center max-w-md">
-                <div className="text-6xl mb-6">🎯</div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
-                  Your Turn to Explain!
-                </h2>
-                <p className="text-gray-400 mb-6">
-                  {room.currentTeam === "red" ? "🔴 Red Team" : "🔵 Blue Team"}{" "}
-                  - Round {room.currentRound}
-                </p>
-                <Button onClick={handleStartTurn} size="lg">
-                  ▶️ Start Turn
-                </Button>
+        <div className="grid md:grid-cols-2 gap-4 md:gap-6">
+          {/* Left Column: Word Card */}
+          <div className="space-y-4">
+            {!turnStarted ? (
+              /* Waiting for turn to start - only show on left side */
+              <div className="flex items-center justify-center min-h-[400px]">
+                {isExplainer ? (
+                  <div className="game-card p-8 md:p-12 text-center max-w-md w-full">
+                    <div className="text-6xl mb-6">🎯</div>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
+                      Your Turn to Explain!
+                    </h2>
+                    <p className="text-gray-400 mb-6">
+                      {room.currentTeam === "red"
+                        ? "🔴 Red Team"
+                        : "🔵 Blue Team"}{" "}
+                      - Round {room.currentRound}
+                    </p>
+                    <Button onClick={handleStartTurn} size="lg">
+                      ▶️ Start Turn
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="game-card p-8 md:p-12 text-center max-w-md w-full">
+                    <div className="text-6xl mb-6">⏸️</div>
+                    <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
+                      Waiting for Turn to Start
+                    </h2>
+                    <p className="text-gray-400">
+                      {explainer?.name || "The explainer"} will start the turn
+                      soon...
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="game-card p-8 md:p-12 text-center max-w-md">
-                <div className="text-6xl mb-6">⏸️</div>
-                <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
-                  Waiting for Turn to Start
-                </h2>
-                <p className="text-gray-400">
-                  {explainer?.name || "The explainer"} will start the turn
-                  soon...
-                </p>
-              </div>
+              <>
+                <WordCard
+                  word={room.currentWord?.word || ""}
+                  tabooWords={room.currentWord?.tabooWords || []}
+                  showWord={canSeeWord}
+                />
+
+                {/* Explainer Controls */}
+                {isExplainer && (
+                  <div className="game-card p-4">
+                    <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
+                      Explainer Controls
+                    </p>
+                    <Button onClick={handleSkip} size="lg" className="w-full">
+                      ⏭️ Skip Word
+                    </Button>
+                  </div>
+                )}
+
+                {/* Buzzer for opposing team */}
+                {isOnOpposingTeam && (
+                  <BuzzerButton
+                    roomId={room._id}
+                    playerId={currentPlayerId}
+                    canBuzz={canBuzz}
+                  />
+                )}
+              </>
             )}
           </div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6">
-            {/* Left Column: Word Card */}
-            <div className="space-y-4">
-              <WordCard
-                word={room.currentWord?.word || ""}
-                tabooWords={room.currentWord?.tabooWords || []}
-                showWord={canSeeWord}
-              />
 
-              {/* Explainer Controls */}
-              {isExplainer && (
-                <div className="game-card p-4">
-                  <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
-                    Explainer Controls
-                  </p>
-                  <Button onClick={handleSkip} size="lg" className="w-full">
-                    ⏭️ Skip Word
-                  </Button>
+          {/* Right Column: Chat and Players - Always visible */}
+          <div className="space-y-4">
+            <GuessChat
+              roomId={room._id}
+              playerId={currentPlayerId}
+              canGuess={canGuess}
+            />
+
+            {/* Player Lists */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Guessing Team */}
+              <div className="game-card p-3">
+                <p className="text-xs font-semibold mb-2 text-white">
+                  {room.currentTeam === "red" ? "🔴" : "🔵"} Guessing
+                </p>
+                <div className="space-y-1">
+                  {currentTeamPlayers.map((p, i) => (
+                    <p
+                      key={p._id}
+                      className={`text-sm ${
+                        i === explainerIndex % currentTeamPlayers.length
+                          ? "text-pink-500 font-semibold"
+                          : "text-gray-300"
+                      }`}
+                    >
+                      {i === explainerIndex % currentTeamPlayers.length &&
+                        "🎤 "}
+                      {p.name}
+                      {p._id === currentPlayerId && " (You)"}
+                    </p>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {/* Buzzer for opposing team */}
-              {isOnOpposingTeam && (
-                <BuzzerButton
-                  roomId={room._id}
-                  playerId={currentPlayerId}
-                  canBuzz={canBuzz}
-                />
-              )}
-            </div>
-
-            {/* Right Column: Chat and Players */}
-            <div className="space-y-4">
-              <GuessChat
-                roomId={room._id}
-                playerId={currentPlayerId}
-                currentRound={room.currentRound}
-                canGuess={canGuess}
-                isExplainer={isExplainer}
-              />
-
-              {/* Player Lists */}
-              <div className="grid grid-cols-2 gap-3">
-                {/* Guessing Team */}
-                <div className="game-card p-3">
-                  <p className="text-xs font-semibold mb-2 text-white">
-                    {room.currentTeam === "red" ? "🔴" : "🔵"} Guessing
-                  </p>
-                  <div className="space-y-1">
-                    {currentTeamPlayers.map((p, i) => (
-                      <p
-                        key={p._id}
-                        className={`text-sm ${
-                          i === explainerIndex % currentTeamPlayers.length
-                            ? "text-pink-500 font-semibold"
-                            : "text-gray-300"
-                        }`}
-                      >
-                        {i === explainerIndex % currentTeamPlayers.length &&
-                          "🎤 "}
-                        {p.name}
-                        {p._id === currentPlayerId && " (You)"}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Watching Team */}
-                <div className="game-card p-3">
-                  <p className="text-xs font-semibold mb-2 text-white">
-                    {room.currentTeam === "red" ? "🔵" : "🔴"} Watching
-                  </p>
-                  <div className="space-y-1">
-                    {opposingTeamPlayers.map((p) => (
-                      <p key={p._id} className="text-sm text-gray-300">
-                        {p.name}
-                        {p._id === currentPlayerId && " (You)"}
-                      </p>
-                    ))}
-                  </div>
+              {/* Watching Team */}
+              <div className="game-card p-3">
+                <p className="text-xs font-semibold mb-2 text-white">
+                  {room.currentTeam === "red" ? "🔵" : "🔴"} Watching
+                </p>
+                <div className="space-y-1">
+                  {opposingTeamPlayers.map((p) => (
+                    <p key={p._id} className="text-sm text-gray-300">
+                      {p.name}
+                      {p._id === currentPlayerId && " (You)"}
+                    </p>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

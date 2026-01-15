@@ -55,6 +55,13 @@ export const startGame = mutation({
       throw new Error("Game has already started");
     }
 
+    // Clear final scores when starting a new game
+    if (room.finalScores) {
+      await ctx.db.patch(args.roomId, {
+        finalScores: undefined,
+      });
+    }
+
     // Check both teams have at least 2 players
     const players = await ctx.db
       .query("players")
@@ -350,10 +357,17 @@ export const endTurn = internalMutation({
 
     // Check if game is over
     if (newRound > room.settings.rounds) {
+      // Store final scores and reset to lobby
       await ctx.db.patch(args.roomId, {
-        status: "finished",
+        status: "lobby",
+        finalScores: room.scores,
+        currentRound: 1,
+        currentTeam: "red",
+        currentExplainerIndex: { red: 0, blue: 0 },
         currentWord: null,
+        scores: { red: 0, blue: 0 },
         turnEndTime: null,
+        usedWordIds: [],
         turnScheduleId: undefined,
       });
       return;
@@ -454,5 +468,68 @@ export const getGuesses = query({
 
     // Sort by timestamp to show in chronological order
     return guesses.sort((a, b) => a.timestamp - b.timestamp);
+  },
+});
+
+export const getAllGuesses = query({
+  args: { roomId: v.id("rooms") },
+  handler: async (ctx, args) => {
+    // Get all guesses for the room (all rounds)
+    const guesses = await ctx.db
+      .query("guesses")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .collect();
+
+    // Sort by timestamp to show in chronological order
+    return guesses.sort((a, b) => a.timestamp - b.timestamp);
+  },
+});
+
+export const resetToLobby = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+
+    // Only the host can reset to lobby
+    if (room.hostId !== args.playerId) {
+      throw new Error("Only the host can reset the game to lobby");
+    }
+
+    // Cancel any scheduled turn end function if it exists
+    if (room.turnScheduleId) {
+      await ctx.scheduler.cancel(room.turnScheduleId);
+    }
+
+    // Reset all game state back to lobby
+    await ctx.db.patch(args.roomId, {
+      status: "lobby",
+      currentRound: 1,
+      currentTeam: "red",
+      currentExplainerIndex: { red: 0, blue: 0 },
+      currentWord: null,
+      scores: { red: 0, blue: 0 },
+      finalScores: undefined,
+      turnEndTime: null,
+      usedWordIds: [],
+      turnScheduleId: undefined,
+    });
+  },
+});
+
+export const clearFinalScores = mutation({
+  args: {
+    roomId: v.id("rooms"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+
+    await ctx.db.patch(args.roomId, {
+      finalScores: undefined,
+    });
   },
 });

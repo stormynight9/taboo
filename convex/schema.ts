@@ -32,6 +32,12 @@ export default defineSchema({
       red: v.number(),
       blue: v.number(),
     }),
+    finalScores: v.optional(
+      v.object({
+        red: v.number(),
+        blue: v.number(),
+      })
+    ),
     turnEndTime: v.union(v.number(), v.null()),
     usedWordIds: v.array(v.id("words")),
     turnScheduleId: v.optional(v.id("_scheduled_functions")),

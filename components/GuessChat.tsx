@@ -9,33 +9,66 @@ import { Button } from "@/components/ui/button";
 interface GuessChatProps {
   roomId: Id<"rooms">;
   playerId: Id<"players">;
-  currentRound: number;
   canGuess: boolean;
-  isExplainer?: boolean;
+}
+
+// Generate a consistent color for a player based on their name
+function getPlayerColor(playerName: string): string {
+  // Hash function to convert string to number
+  let hash = 0;
+  for (let i = 0; i < playerName.length; i++) {
+    hash = playerName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+
+  // Palette of distinct colors that work well on dark backgrounds
+  const colors = [
+    "#EC4899", // pink-500
+    "#3B82F6", // blue-500
+    "#10B981", // emerald-500
+    "#F59E0B", // amber-500
+    "#8B5CF6", // violet-500
+    "#EF4444", // red-500
+    "#06B6D4", // cyan-500
+    "#F97316", // orange-500
+    "#14B8A6", // teal-500
+    "#A855F7", // purple-500
+    "#22C55E", // green-500
+    "#EAB308", // yellow-500
+    "#06B6D4", // sky-500
+    "#F43F5E", // rose-500
+    "#6366F1", // indigo-500
+  ];
+
+  // Use absolute value of hash to get index
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
 }
 
 export default function GuessChat({
   roomId,
   playerId,
-  currentRound,
   canGuess,
-  isExplainer = false,
 }: GuessChatProps) {
   const [guess, setGuess] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const guesses = useQuery(api.game.getGuesses, {
+  // Get all guesses from all rounds (not just current round)
+  const guesses = useQuery(api.game.getAllGuesses, {
     roomId,
-    round: currentRound,
   });
   const submitGuess = useMutation(api.game.submitGuess);
 
-  // Auto-scroll to bottom (but not for explainer to avoid interrupting their view)
+  // Auto-scroll to bottom within the chat container (scrolls only the container, not the page)
   useEffect(() => {
-    if (!isExplainer) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContainerRef.current) {
+      // Scroll the container itself, not the page
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
-  }, [guesses, isExplainer]);
+  }, [guesses]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,11 +89,14 @@ export default function GuessChat({
   return (
     <div className="game-card  ">
       <div className="p-3 border-b border-zinc-700">
-        <h3 className="font-semibold text-sm">💬 Team Guesses</h3>
+        <h3 className="font-medium text-sm">💬 Team Guesses</h3>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[300px] h-[300px]">
+      <div
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[300px] h-[300px]"
+      >
         {!guesses || guesses.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">
             {canGuess
@@ -87,14 +123,17 @@ export default function GuessChat({
                 }`}
               >
                 {!isLogMessage && (
-                  <span className="font-semibold text-pink-500 shrink-0">
+                  <span
+                    className="font-medium shrink-0"
+                    style={{ color: getPlayerColor(g.playerName) }}
+                  >
                     {g.playerName}:
                   </span>
                 )}
                 <span
                   className={
                     g.isCorrect
-                      ? "text-green-400 font-semibold"
+                      ? "text-green-400 font-medium"
                       : isLogMessage
                       ? "text-gray-300 italic"
                       : "text-white"
@@ -112,10 +151,7 @@ export default function GuessChat({
 
       {/* Input */}
       {canGuess ? (
-        <form
-          onSubmit={handleSubmit}
-          className="p-3 border-t border-[var(--card-border)]"
-        >
+        <form onSubmit={handleSubmit} className="p-3 border-t border-zinc-700">
           <div className="flex gap-2">
             <input
               type="text"
@@ -131,7 +167,7 @@ export default function GuessChat({
           </div>
         </form>
       ) : (
-        <div className="p-3 border-t border-[var(--card-border)] text-center text-gray-500 text-sm mt-auto">
+        <div className="p-3 border-t border-zinc-700 text-center text-gray-500 text-sm mt-auto">
           Only the guessing team can submit answers
         </div>
       )}

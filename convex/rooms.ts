@@ -84,3 +84,33 @@ export const get = query({
   },
 });
 
+export const updateSettings = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+    settings: v.object({
+      rounds: v.number(),
+      turnTime: v.number(),
+      tabooWordCount: v.number(),
+    }),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+
+    // Only the host can update settings
+    if (room.hostId !== args.playerId) {
+      throw new Error("Only the host can update room settings");
+    }
+
+    // Only allow updating settings in lobby
+    if (room.status !== "lobby") {
+      throw new Error("Settings can only be changed in the lobby");
+    }
+
+    await ctx.db.patch(args.roomId, {
+      settings: args.settings,
+    });
+  },
+});
+
