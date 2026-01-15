@@ -12,15 +12,15 @@ interface GuessChatProps {
   canGuess: boolean;
 }
 
-// Generate a consistent color for a player based on their name
-function getPlayerColor(playerName: string): string {
+// Generate a consistent color for a player based on their ID or name
+function getPlayerColor(playerIdOrName: string): string {
   // Hash function to convert string to number
   let hash = 0;
-  for (let i = 0; i < playerName.length; i++) {
-    hash = playerName.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < playerIdOrName.length; i++) {
+    hash = playerIdOrName.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  // Palette of distinct colors that work well on dark backgrounds
+  // Expanded palette of distinct colors that work well on dark backgrounds
   const colors = [
     "#EC4899", // pink-500
     "#3B82F6", // blue-500
@@ -34,9 +34,14 @@ function getPlayerColor(playerName: string): string {
     "#A855F7", // purple-500
     "#22C55E", // green-500
     "#EAB308", // yellow-500
-    "#06B6D4", // sky-500
     "#F43F5E", // rose-500
     "#6366F1", // indigo-500
+    "#84CC16", // lime-500
+    "#EC4899", // pink-500 (duplicate for more variety)
+    "#06B6D4", // sky-500
+    "#F97316", // orange-500
+    "#8B5CF6", // violet-500
+    "#10B981", // emerald-500
   ];
 
   // Use absolute value of hash to get index
@@ -109,7 +114,7 @@ export default function GuessChat({
             const isLogMessage =
               g.text.includes("🚨") ||
               g.text.includes("⏭️") ||
-              g.text.includes("buzzed for taboo") ||
+              g.text.includes("buzzed") ||
               g.text.includes("skipped:");
             return (
               <div
@@ -122,26 +127,104 @@ export default function GuessChat({
                     : ""
                 }`}
               >
-                {!isLogMessage && (
-                  <span
-                    className="font-medium shrink-0"
-                    style={{ color: getPlayerColor(g.playerName) }}
-                  >
-                    {g.playerName}:
+                {isLogMessage && g.text.includes("buzzed") ? (
+                  <span className="text-gray-300 italic">
+                    {(() => {
+                      // Parse the taboo violation message to highlight words and player name
+                      // Format: "🚨 {name} buzzed "{word}" - taboo: "{tabooWord}""
+                      const match = g.text.match(
+                        /(🚨 )([^ ]+)( buzzed ")([^"]+)(" - taboo: ")([^"]+)(".*)/
+                      );
+                      if (match) {
+                        const [
+                          ,
+                          emoji,
+                          playerName,
+                          prefix,
+                          word,
+                          middle,
+                          tabooWord,
+                          suffix,
+                        ] = match;
+                        return (
+                          <>
+                            {emoji}
+                            <span
+                              className="font-medium"
+                              style={{ color: getPlayerColor(g.playerId) }}
+                            >
+                              {playerName}
+                            </span>
+                            {prefix}
+                            <span className="text-yellow-400 font-medium">
+                              {word}
+                            </span>
+                            {middle}
+                            <span className="text-red-400 font-medium">
+                              {tabooWord}
+                            </span>
+                            {suffix}
+                          </>
+                        );
+                      }
+                      return g.text;
+                    })()}
                   </span>
+                ) : isLogMessage && g.text.includes("skipped") ? (
+                  <span className="text-gray-300 italic">
+                    {(() => {
+                      // Parse the skip message to highlight player name
+                      // Format: "⏭️ {name} skipped: "{word}""
+                      const match = g.text.match(
+                        /(⏭️ )([^ ]+)( skipped: ")([^"]+)(".*)/
+                      );
+                      if (match) {
+                        const [, emoji, playerName, prefix, word, suffix] =
+                          match;
+                        return (
+                          <>
+                            {emoji}
+                            <span
+                              className="font-medium"
+                              style={{ color: getPlayerColor(g.playerId) }}
+                            >
+                              {playerName}
+                            </span>
+                            {prefix}
+                            <span className="text-yellow-400 font-medium">
+                              {word}
+                            </span>
+                            {suffix}
+                          </>
+                        );
+                      }
+                      return g.text;
+                    })()}
+                  </span>
+                ) : (
+                  <>
+                    {!isLogMessage && (
+                      <span
+                        className="font-medium shrink-0"
+                        style={{ color: getPlayerColor(g.playerId) }}
+                      >
+                        {g.playerName}:
+                      </span>
+                    )}
+                    <span
+                      className={
+                        g.isCorrect
+                          ? "text-green-400 font-medium"
+                          : isLogMessage
+                          ? "text-gray-300 italic"
+                          : "text-white"
+                      }
+                    >
+                      {g.text}
+                      {g.isCorrect && " ✓"}
+                    </span>
+                  </>
                 )}
-                <span
-                  className={
-                    g.isCorrect
-                      ? "text-green-400 font-medium"
-                      : isLogMessage
-                      ? "text-gray-300 italic"
-                      : "text-white"
-                  }
-                >
-                  {g.text}
-                  {g.isCorrect && " ✓"}
-                </span>
               </div>
             );
           })

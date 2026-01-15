@@ -7,7 +7,6 @@ import Timer from "./Timer";
 import WordCard from "./WordCard";
 import TeamScores from "./TeamScores";
 import GuessChat from "./GuessChat";
-import BuzzerButton from "./BuzzerButton";
 import { Button } from "@/components/ui/button";
 
 interface GameBoardProps {
@@ -204,6 +203,9 @@ export default function GameBoard({
                   word={room.currentWord?.word || ""}
                   tabooWords={room.currentWord?.tabooWords || []}
                   showWord={canSeeWord}
+                  roomId={room._id}
+                  playerId={currentPlayerId}
+                  canBuzz={canBuzz}
                 />
 
                 {/* Explainer Controls */}
@@ -216,15 +218,6 @@ export default function GameBoard({
                       ⏭️ Skip Word
                     </Button>
                   </div>
-                )}
-
-                {/* Buzzer for opposing team */}
-                {isOnOpposingTeam && (
-                  <BuzzerButton
-                    roomId={room._id}
-                    playerId={currentPlayerId}
-                    canBuzz={canBuzz}
-                  />
                 )}
               </>
             )}

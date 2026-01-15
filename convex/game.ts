@@ -305,6 +305,7 @@ export const buzzTaboo = mutation({
   args: {
     roomId: v.id("rooms"),
     playerId: v.id("players"),
+    tabooWord: v.string(),
   },
   handler: async (ctx, args) => {
     const room = await ctx.db.get(args.roomId);
@@ -322,6 +323,11 @@ export const buzzTaboo = mutation({
     // Only the opposing team can buzz
     if (player.team === room.currentTeam || player.team === null) {
       throw new Error("Only the opposing team can buzz for taboo violations");
+    }
+
+    // Validate that the provided tabooWord exists in the current word's taboo words
+    if (!room.currentWord.tabooWords.includes(args.tabooWord)) {
+      throw new Error("Invalid taboo word");
     }
 
     // Deduct point from current team
@@ -355,12 +361,12 @@ export const buzzTaboo = mutation({
         : [...room.usedWordIds, wordData.wordId],
     });
 
-    // Log the taboo violation
+    // Log the taboo violation with the specific taboo word
     await ctx.db.insert("guesses", {
       roomId: args.roomId,
       playerId: args.playerId,
       playerName: player.name,
-      text: `🚨 ${player.name} buzzed for taboo violation on "${currentWord}"!`,
+      text: `🚨 ${player.name} buzzed "${currentWord}" - taboo: "${args.tabooWord}"`,
       isCorrect: false,
       round: room.currentRound,
       timestamp: Date.now(),
