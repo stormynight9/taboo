@@ -58,6 +58,68 @@ async function pickRandomWord(
   };
 }
 
+// Helper function to calculate Levenshtein distance (edit distance)
+function levenshteinDistance(str1: string, str2: string): number {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const matrix: number[][] = [];
+
+  // Initialize matrix
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  // Fill the matrix
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1, // deletion
+          matrix[i][j - 1] + 1, // insertion
+          matrix[i - 1][j - 1] + 1 // substitution
+        );
+      }
+    }
+  }
+
+  return matrix[len1][len2];
+}
+
+// Helper function to check if a guess is a fuzzy match of the correct word
+// Returns an object with match status and whether it's exact
+function isFuzzyMatch(
+  guess: string,
+  correctWord: string
+): {
+  isMatch: boolean;
+  isExact: boolean;
+} {
+  // Normalize both strings (lowercase and trim)
+  const normalizedGuess = guess.toLowerCase().trim();
+  const normalizedCorrect = correctWord.toLowerCase().trim();
+
+  // Exact match (fast path)
+  if (normalizedGuess === normalizedCorrect) {
+    return { isMatch: true, isExact: true };
+  }
+
+  // Calculate edit distance
+  const distance = levenshteinDistance(normalizedGuess, normalizedCorrect);
+
+  // Moderate tolerance:
+  // - Words ≤ 5 characters: accept edit distance ≤ 1
+  // - Words > 5 characters: accept edit distance ≤ 2
+  const maxDistance = normalizedCorrect.length <= 5 ? 1 : 2;
+
+  const isMatch = distance <= maxDistance;
+  return { isMatch, isExact: false };
+}
+
 export const startGame = mutation({
   args: {
     roomId: v.id("rooms"),
@@ -179,17 +241,28 @@ export const submitGuess = mutation({
       throw new Error("The explainer cannot guess");
     }
 
-    // Check if guess is correct (case-insensitive)
-    const isCorrect =
-      room.currentWord !== null &&
-      args.text.toLowerCase().trim() === room.currentWord.word.toLowerCase();
+    // Check if guess is correct using fuzzy matching
+    let isCorrect = false;
+    let isExact = false;
+    let logText = args.text;
+
+    if (room.currentWord !== null) {
+      const matchResult = isFuzzyMatch(args.text, room.currentWord.word);
+      isCorrect = matchResult.isMatch;
+      isExact = matchResult.isExact;
+
+      // If it's a fuzzy match (not exact), show both the guess and correct word in logs
+      if (isCorrect && !isExact) {
+        logText = `${args.text} (correct word: "${room.currentWord.word}")`;
+      }
+    }
 
     // Record the guess
     await ctx.db.insert("guesses", {
       roomId: args.roomId,
       playerId: args.playerId,
       playerName: player.name,
-      text: args.text,
+      text: logText,
       isCorrect,
       round: room.currentRound,
       timestamp: Date.now(),

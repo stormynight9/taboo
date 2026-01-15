@@ -54,6 +54,7 @@ export const seedDefaultPack = mutation({
       title: "General Words",
       description: "Common English words and phrases",
       isDefault: true,
+      emoji: "📚",
     });
 
     return { packId, message: "Default pack created" };
@@ -64,12 +65,14 @@ export const createPack = mutation({
   args: {
     title: v.string(),
     description: v.string(),
+    emoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const packId = await ctx.db.insert("packs", {
       title: args.title,
       description: args.description,
       isDefault: false,
+      emoji: args.emoji,
     });
 
     return { packId };
@@ -115,6 +118,7 @@ export const createPackWithWords = mutation({
   args: {
     title: v.string(),
     description: v.string(),
+    emoji: v.optional(v.string()),
     words: v.array(
       v.object({
         word: v.string(),
@@ -128,6 +132,7 @@ export const createPackWithWords = mutation({
       title: args.title,
       description: args.description,
       isDefault: false,
+      emoji: args.emoji,
     });
 
     // Insert all words
@@ -163,6 +168,7 @@ export const migrateExistingWords = mutation({
         title: "General Words",
         description: "Common English words and phrases",
         isDefault: true,
+        emoji: "📚",
       });
       defaultPack = await ctx.db.get(packId);
       if (!defaultPack) {
@@ -396,6 +402,7 @@ export const seedExamplePacks = mutation({
         title: "Countries & Cities",
         description: "Famous places around the world",
         isDefault: false,
+        emoji: "🌍",
       });
 
       for (const wordData of COUNTRIES_CITIES_WORDS) {
@@ -413,6 +420,7 @@ export const seedExamplePacks = mutation({
         title: "Famous People",
         description: "Historical figures and celebrities",
         isDefault: false,
+        emoji: "⭐",
       });
 
       for (const wordData of FAMOUS_PEOPLE_WORDS) {
@@ -430,6 +438,7 @@ export const seedExamplePacks = mutation({
         title: "Movies & Series",
         description: "Popular films and TV shows",
         isDefault: false,
+        emoji: "🎬",
       });
 
       for (const wordData of MOVIES_SERIES_WORDS) {
@@ -447,5 +456,24 @@ export const seedExamplePacks = mutation({
       famousPeoplePackId,
       moviesSeriesPackId,
     };
+  },
+});
+
+export const updatePackEmoji = mutation({
+  args: {
+    packId: v.id("packs"),
+    emoji: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const pack = await ctx.db.get(args.packId);
+    if (!pack) {
+      throw new Error("Pack not found");
+    }
+
+    await ctx.db.patch(args.packId, {
+      emoji: args.emoji,
+    });
+
+    return { message: `Updated emoji for pack "${pack.title}"` };
   },
 });

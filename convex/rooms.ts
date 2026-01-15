@@ -47,6 +47,7 @@ export const create = mutation({
         title: "General Words",
         description: "Common English words and phrases",
         isDefault: true,
+        emoji: "📚",
       });
       defaultPack = await ctx.db.get(packId);
       if (!defaultPack) {

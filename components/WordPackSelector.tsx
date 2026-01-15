@@ -92,7 +92,7 @@ export default function WordPackSelector({
     <>
       <div className="game-card p-4 md:p-6">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-medium text-pink-500">Word Packs</h2>
+          <h2 className="text-lg font-medium ">Word Packs</h2>
           {isHost && (
             <Button
               onClick={() => setShowDialog(true)}
@@ -103,7 +103,7 @@ export default function WordPackSelector({
             </Button>
           )}
         </div>
-        <div className="space-y-2">
+        <div className=" grid grid-cols-1 md:grid-cols-2 gap-2">
           {selectedPacks.length === 0 ? (
             <p className="text-gray-400 text-sm">No packs selected</p>
           ) : (
@@ -112,23 +112,21 @@ export default function WordPackSelector({
                 key={pack._id}
                 className="flex items-start gap-2 p-2 bg-zinc-900 rounded-lg"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-white font-medium text-sm">
-                      {pack.title}
-                      {pack.isDefault && (
-                        <span className="text-xs text-gray-400 ml-2">
-                          (Default)
-                        </span>
-                      )}
+                <div className="flex items-center gap-2 justify-between w-full">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-white font-medium text-sm">
+                        {pack.title}
+                      </p>
+                      <span className="text-xs text-gray-500">
+                        ({pack.wordCount || 0} words)
+                      </span>
+                    </div>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {pack.description}
                     </p>
-                    <span className="text-xs text-gray-500">
-                      ({pack.wordCount || 0} words)
-                    </span>
                   </div>
-                  <p className="text-gray-400 text-xs mt-1">
-                    {pack.description}
-                  </p>
+                  {pack.emoji && <span className="text-2xl">{pack.emoji}</span>}
                 </div>
               </div>
             ))
@@ -191,11 +189,6 @@ export default function WordPackSelector({
                           <div className="flex items-center gap-2">
                             <p className="text-white font-medium text-sm">
                               {pack.title}
-                              {pack.isDefault && (
-                                <span className="text-xs text-gray-400 ml-2">
-                                  (Default)
-                                </span>
-                              )}
                             </p>
                             <span className="text-xs text-gray-500">
                               ({pack.wordCount || 0} words)
@@ -205,6 +198,9 @@ export default function WordPackSelector({
                             {pack.description}
                           </p>
                         </div>
+                        {pack.emoji && (
+                          <div className="text-2xl shrink-0">{pack.emoji}</div>
+                        )}
                       </div>
                       {isOnlySelected && (
                         <p className="text-xs text-amber-400 mt-2 ml-8">

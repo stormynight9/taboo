@@ -75,6 +75,7 @@ export default defineSchema({
     title: v.string(),
     description: v.string(),
     isDefault: v.boolean(),
+    emoji: v.optional(v.string()),
   }).index("by_isDefault", ["isDefault"]),
 });
 
