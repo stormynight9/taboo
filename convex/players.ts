@@ -17,10 +17,7 @@ export const join = mutation({
       throw new Error("Room not found");
     }
 
-    if (room.status !== "lobby") {
-      throw new Error("Game has already started");
-    }
-
+    // Allow joining mid-game - players will spectate if game is in progress
     // Check if player with this session already exists in this room
     const existingPlayer = await ctx.db
       .query("players")

@@ -9,6 +9,7 @@
  */
 
 import type * as game from "../game.js";
+import type * as packs from "../packs.js";
 import type * as players from "../players.js";
 import type * as rooms from "../rooms.js";
 import type * as words from "../words.js";
@@ -21,6 +22,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   game: typeof game;
+  packs: typeof packs;
   players: typeof players;
   rooms: typeof rooms;
   words: typeof words;

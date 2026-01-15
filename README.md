@@ -34,3 +34,61 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Adding Custom Words
+
+You can add your own words to packs using the Convex dashboard. There are two ways to do this:
+
+### Option 1: Add Words to an Existing Pack
+
+1. Go to the Convex dashboard → **Data** → `packs` table
+2. Find the pack you want to add words to and copy its `_id`
+3. Go to **Functions** → `packs.addWordsToPack`
+4. Use this format:
+
+```json
+{
+  "packId": "paste_pack_id_here",
+  "words": [
+    {
+      "word": "Example Word",
+      "tabooWords": ["Forbidden", "Word1", "Word2", "Word3", "Word4"]
+    },
+    {
+      "word": "Another Word",
+      "tabooWords": ["Taboo1", "Taboo2", "Taboo3", "Taboo4", "Taboo5"]
+    }
+  ]
+}
+```
+
+### Option 2: Create a New Pack with Words
+
+1. Go to **Functions** → `packs.createPackWithWords`
+2. Use this format:
+
+```json
+{
+  "title": "My Custom Pack",
+  "description": "Words I created",
+  "words": [
+    {
+      "word": "Custom Word 1",
+      "tabooWords": [
+        "Forbidden1",
+        "Forbidden2",
+        "Forbidden3",
+        "Forbidden4",
+        "Forbidden5"
+      ]
+    },
+    {
+      "word": "Custom Word 2",
+      "tabooWords": ["Taboo1", "Taboo2", "Taboo3", "Taboo4", "Taboo5"]
+    }
+  ]
+}
+```
+
+After running either function, refresh your app and the new words will be available in the selected pack(s).
+

@@ -41,6 +41,7 @@ export default defineSchema({
     turnEndTime: v.union(v.number(), v.null()),
     usedWordIds: v.array(v.id("words")),
     turnScheduleId: v.optional(v.id("_scheduled_functions")),
+    selectedPackIds: v.optional(v.array(v.id("packs"))),
   }).index("by_code", ["code"]),
 
   players: defineTable({
@@ -67,6 +68,13 @@ export default defineSchema({
   words: defineTable({
     word: v.string(),
     tabooWords: v.array(v.string()),
-  }),
+    packId: v.id("packs"),
+  }).index("by_pack", ["packId"]),
+
+  packs: defineTable({
+    title: v.string(),
+    description: v.string(),
+    isDefault: v.boolean(),
+  }).index("by_isDefault", ["isDefault"]),
 });
 

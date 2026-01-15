@@ -47,9 +47,10 @@ export default function GameBoard({
   const isOnCurrentTeam = currentPlayer?.team === room.currentTeam;
   const isOnOpposingTeam =
     currentPlayer?.team !== room.currentTeam && currentPlayer?.team !== null;
+  const isSpectator = currentPlayer?.team === null;
 
-  // Who can see the word: explainer and opposing team
-  const canSeeWord = isExplainer || isOnOpposingTeam;
+  // Who can see the word: explainer, opposing team, and spectators
+  const canSeeWord = isExplainer || isOnOpposingTeam || isSpectator;
 
   // Who can guess: current team members except explainer
   const canGuess = isOnCurrentTeam && !isExplainer;
@@ -119,13 +120,20 @@ export default function GameBoard({
               ? room.currentTeam === "red"
                 ? "bg-red-500/20 border border-red-500"
                 : "bg-blue-500/20 border border-blue-500"
-              : "bg-red-500/10 border border-red-400"
+              : isOnOpposingTeam
+              ? "bg-red-500/10 border border-red-400"
+              : "bg-zinc-800/50 border border-zinc-600"
           }`}
         >
           {!turnStarted ? (
             isExplainer ? (
               <p className="font-medium text-pink-500">
                 ⏸️ It&apos;s your turn! Click &quot;Start Turn&quot; to begin.
+              </p>
+            ) : isSpectator ? (
+              <p className="font-medium text-gray-300">
+                👁️ You are spectating. Waiting for{" "}
+                {explainer?.name || "the explainer"} to start the turn...
               </p>
             ) : (
               <p className="font-medium text-white">
@@ -148,7 +156,9 @@ export default function GameBoard({
               forbidden word.
             </p>
           ) : (
-            <p className="text-gray-400">Spectating...</p>
+            <p className="font-medium text-gray-300">
+              👁️ You are SPECTATING. Watch the game unfold!
+            </p>
           )}
         </div>
 

@@ -19,6 +19,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { api } from "../convex/_generated/api";
 import { Doc, Id } from "../convex/_generated/dataModel";
+import WordPackSelector from "./WordPackSelector";
 interface LobbyProps {
   room: Doc<"rooms">;
   players: Doc<"players">[];
@@ -458,6 +459,14 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Word Packs */}
+        <WordPackSelector
+          roomId={room._id}
+          playerId={currentPlayerId}
+          isHost={isHost}
+          selectedPackIds={room.selectedPackIds ?? []}
+        />
 
         {/* Teams */}
         <div className="grid md:grid-cols-2 gap-4 md:gap-6">

@@ -316,11 +316,30 @@ export const seed = mutation({
       return { message: "Words already seeded" };
     }
 
-    // Insert all words
+    // Get or create default pack
+    let defaultPack = await ctx.db
+      .query("packs")
+      .withIndex("by_isDefault", (q) => q.eq("isDefault", true))
+      .first();
+
+    if (!defaultPack) {
+      const packId = await ctx.db.insert("packs", {
+        title: "General Words",
+        description: "Common English words and phrases",
+        isDefault: true,
+      });
+      defaultPack = await ctx.db.get(packId);
+      if (!defaultPack) {
+        throw new Error("Failed to create default pack");
+      }
+    }
+
+    // Insert all words with default pack
     for (const wordData of WORD_BANK) {
       await ctx.db.insert("words", {
         word: wordData.word,
         tabooWords: wordData.tabooWords,
+        packId: defaultPack._id,
       });
     }
 

@@ -36,6 +36,24 @@ export const create = mutation({
         .first();
     }
 
+    // Get or create default pack
+    let defaultPack = await ctx.db
+      .query("packs")
+      .withIndex("by_isDefault", (q) => q.eq("isDefault", true))
+      .first();
+
+    if (!defaultPack) {
+      const packId = await ctx.db.insert("packs", {
+        title: "General Words",
+        description: "Common English words and phrases",
+        isDefault: true,
+      });
+      defaultPack = await ctx.db.get(packId);
+      if (!defaultPack) {
+        throw new Error("Failed to create default pack");
+      }
+    }
+
     // Create room first without hostId
     const roomId = await ctx.db.insert("rooms", {
       code,
@@ -48,6 +66,7 @@ export const create = mutation({
       scores: { red: 0, blue: 0 },
       turnEndTime: null,
       usedWordIds: [],
+      selectedPackIds: [defaultPack._id],
     });
 
     // Create the host player
@@ -110,6 +129,86 @@ export const updateSettings = mutation({
 
     await ctx.db.patch(args.roomId, {
       settings: args.settings,
+    });
+  },
+});
+
+export const migrateRoomsToPacks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Get or create default pack
+    let defaultPack = await ctx.db
+      .query("packs")
+      .withIndex("by_isDefault", (q) => q.eq("isDefault", true))
+      .first();
+
+    if (!defaultPack) {
+      const packId = await ctx.db.insert("packs", {
+        title: "General Words",
+        description: "Common English words and phrases",
+        isDefault: true,
+      });
+      defaultPack = await ctx.db.get(packId);
+      if (!defaultPack) {
+        throw new Error("Failed to create default pack");
+      }
+    }
+
+    // Find all rooms without selectedPackIds
+    const allRooms = await ctx.db.query("rooms").collect();
+    let updatedCount = 0;
+
+    for (const room of allRooms) {
+      if (!room.selectedPackIds) {
+        await ctx.db.patch(room._id, {
+          selectedPackIds: [defaultPack._id],
+        });
+        updatedCount++;
+      }
+    }
+
+    return {
+      message: `Migrated ${updatedCount} rooms to use default pack`,
+      updatedRooms: updatedCount,
+    };
+  },
+});
+
+export const updateSelectedPacks = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+    packIds: v.array(v.id("packs")),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) throw new Error("Room not found");
+
+    // Only the host can update packs
+    if (room.hostId !== args.playerId) {
+      throw new Error("Only the host can update selected packs");
+    }
+
+    // Only allow updating packs in lobby
+    if (room.status !== "lobby") {
+      throw new Error("Packs can only be changed in the lobby");
+    }
+
+    // Validate that at least one pack is selected
+    if (args.packIds.length === 0) {
+      throw new Error("At least one pack must be selected");
+    }
+
+    // Validate that all pack IDs exist
+    for (const packId of args.packIds) {
+      const pack = await ctx.db.get(packId);
+      if (!pack) {
+        throw new Error(`Pack with ID ${packId} not found`);
+      }
+    }
+
+    await ctx.db.patch(args.roomId, {
+      selectedPackIds: args.packIds,
     });
   },
 });

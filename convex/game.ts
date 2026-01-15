@@ -10,9 +10,29 @@ async function pickRandomWord(
   ctx: MutationCtx,
   roomId: Id<"rooms">,
   usedWordIds: Id<"words">[],
-  tabooWordCount: number
+  tabooWordCount: number,
+  selectedPackIds: Id<"packs">[]
 ) {
-  const allWords = await ctx.db.query("words").collect();
+  // Filter words by selected packs
+  let allWords: Doc<"words">[] = [];
+
+  // Handle case where selectedPackIds might be undefined (for existing rooms)
+  const packIds = selectedPackIds || [];
+
+  if (packIds.length === 0) {
+    // If no packs selected, get all words (fallback)
+    allWords = await ctx.db.query("words").collect();
+  } else {
+    // Get words from selected packs
+    for (const packId of packIds) {
+      const packWords = await ctx.db
+        .query("words")
+        .withIndex("by_pack", (q) => q.eq("packId", packId))
+        .collect();
+      allWords = [...allWords, ...packWords];
+    }
+  }
+
   const availableWords = allWords.filter(
     (w: Doc<"words">) => !usedWordIds.includes(w._id)
   );
@@ -62,6 +82,16 @@ export const startGame = mutation({
       });
     }
 
+    // Clear all guesses from previous games
+    const oldGuesses = await ctx.db
+      .query("guesses")
+      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .collect();
+
+    for (const guess of oldGuesses) {
+      await ctx.db.delete(guess._id);
+    }
+
     // Check both teams have at least 2 players
     const players = await ctx.db
       .query("players")
@@ -80,7 +110,8 @@ export const startGame = mutation({
       ctx,
       args.roomId,
       [],
-      room.settings.tabooWordCount
+      room.settings.tabooWordCount,
+      room.selectedPackIds ?? []
     );
 
     const turnEndTime = Date.now() + room.settings.turnTime * 1000;
@@ -177,7 +208,8 @@ export const submitGuess = mutation({
         ctx,
         args.roomId,
         room.usedWordIds,
-        room.settings.tabooWordCount
+        room.settings.tabooWordCount,
+        room.selectedPackIds || []
       );
 
       await ctx.db.patch(args.roomId, {
@@ -235,7 +267,8 @@ export const buzzTaboo = mutation({
       ctx,
       args.roomId,
       room.usedWordIds,
-      room.settings.tabooWordCount
+      room.settings.tabooWordCount,
+      room.selectedPackIds ?? []
     );
 
     await ctx.db.patch(args.roomId, {
@@ -308,7 +341,8 @@ export const skipWord = mutation({
       ctx,
       args.roomId,
       room.usedWordIds,
-      room.settings.tabooWordCount
+      room.settings.tabooWordCount,
+      room.selectedPackIds ?? []
     );
 
     await ctx.db.patch(args.roomId, {
@@ -430,7 +464,8 @@ export const startTurn = mutation({
       ctx,
       args.roomId,
       room.usedWordIds,
-      room.settings.tabooWordCount
+      room.settings.tabooWordCount,
+      room.selectedPackIds ?? []
     );
 
     const turnEndTime = Date.now() + room.settings.turnTime * 1000;
