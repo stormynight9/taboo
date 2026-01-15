@@ -15,27 +15,27 @@ const fredokaMono = Fredoka({
 });
 
 export const metadata: Metadata = {
-  title: "Taboo - Multiplayer Word Game",
+  title: "Taboo - Real-Time Multiplayer Word Guessing Party Game",
   description:
-    "The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete!",
+    "Play Taboo online with friends! The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete in this fun word game. Free to play!",
   openGraph: {
-    title: "Taboo - Multiplayer Word Game",
+    title: "Taboo - Real-Time Multiplayer Word Guessing Party Game",
     description:
-      "The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete!",
+      "Play Taboo online with friends! The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete in this fun word game. Free to play!",
     images: [
       {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Taboo - Multiplayer Word Game",
+        alt: "Taboo - Real-Time Multiplayer Word Guessing Party Game",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Taboo - Multiplayer Word Game",
+    title: "Taboo - Real-Time Multiplayer Word Guessing Party Game",
     description:
-      "The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete!",
+      "Play Taboo online with friends! The ultimate real-time multiplayer word-guessing party game. Create rooms, form teams, and compete in this fun word game. Free to play!",
     images: ["/og-image.png"],
   },
 };
