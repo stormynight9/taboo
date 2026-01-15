@@ -244,7 +244,7 @@ export default function OpenGraphPage() {
       <FloatingIcons />
       <FloatingWords />
       <div className="relative z-10 flex flex-col items-center gap-8 text-center px-12">
-        <h1 className="text-[12rem] font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
+        <h1 className="text-[12rem] font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.2)]">
           TABOO
         </h1>
         <p className="text-5xl text-white font-medium drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">

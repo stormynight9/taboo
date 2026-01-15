@@ -206,7 +206,7 @@ export default function Home() {
       <main className="relative z-10 flex flex-col items-center gap-12 max-w-2xl text-center">
         {/* Logo / Title */}
         <div className="space-y-4">
-          <h1 className="text-7xl font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
+          <h1 className="text-8xl font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.2)]">
             TABOO
           </h1>
           <p className="text-xl text-white font-medium drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
