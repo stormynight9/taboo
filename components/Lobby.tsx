@@ -318,7 +318,7 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
           <h2 className="text-lg font-medium mb-3 ">Invite Players</h2>
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="flex-1 flex items-center gap-3 bg-zinc-900 rounded-lg px-4 py-3.5 border border-zinc-700">
-              <span className="text-gray-500 text-sm truncate hidden sm:block">
+              <span className="text-gray-500 text-sm truncate sm:block">
                 {roomUrl}
               </span>
             </div>

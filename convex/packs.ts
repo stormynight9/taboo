@@ -5,7 +5,23 @@ import { Id } from "./_generated/dataModel";
 export const getAll = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("packs").collect();
+    const packs = await ctx.db.query("packs").collect();
+
+    // Get word count for each pack
+    const packsWithCounts = await Promise.all(
+      packs.map(async (pack) => {
+        const wordCount = await ctx.db
+          .query("words")
+          .withIndex("by_pack", (q) => q.eq("packId", pack._id))
+          .collect();
+        return {
+          ...pack,
+          wordCount: wordCount.length,
+        };
+      })
+    );
+
+    return packsWithCounts;
   },
 });
 

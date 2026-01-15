@@ -1,5 +1,18 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## About the Game
+
+**Taboo** is a real-time multiplayer word-guessing game where two teams compete to guess words. Here's how it works:
+
+- **Two Teams**: Players join either the Red or Blue team
+- **The Explainer**: One player from the current team describes a word without using forbidden "taboo" words
+- **The Guessers**: Other team members try to guess the word by typing in the chat
+- **The Watchers**: The opposing team watches for taboo violations and can buzz if the explainer says a forbidden word
+- **Scoring**: Teams earn points for correct guesses, lose points for taboo violations
+- **Word Packs**: Hosts can select from different word packs (General Words, Countries & Cities, Famous People, Movies & Series, or custom packs)
+
+The game features real-time updates, customizable settings (rounds, turn time, taboo word count), and support for spectators who can watch games in progress.
+
 ## Getting Started
 
 First, run the development server:

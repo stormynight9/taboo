@@ -113,14 +113,19 @@ export default function WordPackSelector({
                 className="flex items-start gap-2 p-2 bg-zinc-900 rounded-lg"
               >
                 <div className="flex-1">
-                  <p className="text-white font-medium text-sm">
-                    {pack.title}
-                    {pack.isDefault && (
-                      <span className="text-xs text-gray-400 ml-2">
-                        (Default)
-                      </span>
-                    )}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-medium text-sm">
+                      {pack.title}
+                      {pack.isDefault && (
+                        <span className="text-xs text-gray-400 ml-2">
+                          (Default)
+                        </span>
+                      )}
+                    </p>
+                    <span className="text-xs text-gray-500">
+                      ({pack.wordCount || 0} words)
+                    </span>
+                  </div>
                   <p className="text-gray-400 text-xs mt-1">
                     {pack.description}
                   </p>
@@ -183,14 +188,19 @@ export default function WordPackSelector({
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="text-white font-medium text-sm">
-                            {pack.title}
-                            {pack.isDefault && (
-                              <span className="text-xs text-gray-400 ml-2">
-                                (Default)
-                              </span>
-                            )}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-white font-medium text-sm">
+                              {pack.title}
+                              {pack.isDefault && (
+                                <span className="text-xs text-gray-400 ml-2">
+                                  (Default)
+                                </span>
+                              )}
+                            </p>
+                            <span className="text-xs text-gray-500">
+                              ({pack.wordCount || 0} words)
+                            </span>
+                          </div>
                           <p className="text-gray-400 text-xs mt-1">
                             {pack.description}
                           </p>
