@@ -97,7 +97,7 @@ function FloatingWords() {
       "The Godfather",
       "Frozen",
     ];
-    const count = 10 + Math.floor(Math.random() * 6);
+    const count = 5 + Math.floor(Math.random() * 6);
     const shuffled = [...wordList].sort(() => Math.random() - 0.5);
     const selectedWords = shuffled.slice(0, count);
 
@@ -115,7 +115,7 @@ function FloatingWords() {
     for (let i = 0; i < selectedWords.length; i++) {
       data.push({
         word: selectedWords[i],
-        size: 20 + Math.random() * 16,
+        size: 40 + Math.random() * 16,
         left: Math.random() * 100,
         top: Math.random() * 100,
         delay: Math.random() * 5,
@@ -183,7 +183,7 @@ function FloatingIcons() {
       "🎺",
       "🎻",
     ];
-    const count = 10 + Math.floor(Math.random() * 6);
+    const count = 5 + Math.floor(Math.random() * 6);
     const shuffled = [...iconList].sort(() => Math.random() - 0.5);
     const selectedIcons = shuffled.slice(0, count);
 
@@ -200,7 +200,7 @@ function FloatingIcons() {
     for (let i = 0; i < selectedIcons.length; i++) {
       data.push({
         icon: selectedIcons[i],
-        size: 40 + Math.random() * 40,
+        size: 60 + Math.random() * 40,
         left: Math.random() * 100,
         top: Math.random() * 100,
         delay: Math.random() * 5,
@@ -244,10 +244,10 @@ export default function OpenGraphPage() {
       <FloatingIcons />
       <FloatingWords />
       <div className="relative z-10 flex flex-col items-center gap-8 text-center px-12">
-        <h1 className="text-9xl font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
+        <h1 className="text-[12rem] font-bold tracking-tight text-pink-500 drop-shadow-[0_0_30px_rgba(236,72,153,0.5)]">
           TABOO
         </h1>
-        <p className="text-4xl text-white font-medium drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+        <p className="text-5xl text-white font-medium drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
           The ultimate word-guessing party game
         </p>
       </div>
