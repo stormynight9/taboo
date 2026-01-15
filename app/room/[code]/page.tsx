@@ -58,6 +58,23 @@ export default function RoomPage() {
     }
   }, [currentPlayer]);
 
+  // Auto-redirect if player was kicked (after showing message)
+  useEffect(() => {
+    if (
+      playerId &&
+      players !== undefined &&
+      room &&
+      room.status === "lobby" &&
+      !players.some((p) => p._id === playerId)
+    ) {
+      // Player was kicked - redirect to home after showing message
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 3000); // Give 3 seconds to read the message
+      return () => clearTimeout(timer);
+    }
+  }, [playerId, players, room, router]);
+
   // Handle join
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,7 +110,7 @@ export default function RoomPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <div className="w-12 h-12 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-gray-400">Loading room...</p>
         </div>
       </div>
@@ -168,6 +185,32 @@ export default function RoomPage() {
   }
 
   const actualPlayerId = playerId || currentPlayer?._id;
+
+  // Check if player was kicked (had playerId but no longer exists)
+  if (
+    playerId &&
+    players !== undefined &&
+    !players.some((p) => p._id === playerId) &&
+    room &&
+    room.status === "lobby"
+  ) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="game-card p-8 text-center space-y-4 max-w-md">
+          <h1 className="text-2xl font-semibold text-red-400">
+            You Were Kicked
+          </h1>
+          <p className="text-gray-400">
+            The host has removed you from the room.
+          </p>
+          <Button onClick={() => router.push("/")} variant="default" size="lg">
+            Go Home
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (!actualPlayerId || !players) {
     return (
       <div className="min-h-screen flex items-center justify-center">

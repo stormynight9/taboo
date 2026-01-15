@@ -74,6 +74,22 @@ body {
   }
 }
 
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  25% {
+    transform: translate(20px, -30px) rotate(5deg);
+  }
+  50% {
+    transform: translate(-15px, -60px) rotate(-5deg);
+  }
+  75% {
+    transform: translate(-30px, -30px) rotate(3deg);
+  }
+}
+
 .animate-pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
@@ -84,6 +100,19 @@ body {
 
 .animate-shake {
   animation: shake 0.3s ease-in-out;
+}
+
+.floating-icon {
+  animation: float infinite ease-in-out;
+  will-change: transform;
+}
+
+.floating-word {
+  animation: float infinite ease-in-out;
+  will-change: transform;
+  font-weight: 500;
+  color: var(--accent);
+  user-select: none;
 }
 
 /* Team colors */

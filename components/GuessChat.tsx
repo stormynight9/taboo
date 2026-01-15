@@ -11,6 +11,7 @@ interface GuessChatProps {
   playerId: Id<"players">;
   currentRound: number;
   canGuess: boolean;
+  isExplainer?: boolean;
 }
 
 export default function GuessChat({
@@ -18,6 +19,7 @@ export default function GuessChat({
   playerId,
   currentRound,
   canGuess,
+  isExplainer = false,
 }: GuessChatProps) {
   const [guess, setGuess] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -28,10 +30,12 @@ export default function GuessChat({
   });
   const submitGuess = useMutation(api.game.submitGuess);
 
-  // Auto-scroll to bottom
+  // Auto-scroll to bottom (but not for explainer to avoid interrupting their view)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [guesses]);
+    if (!isExplainer) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [guesses, isExplainer]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,13 +54,13 @@ export default function GuessChat({
   };
 
   return (
-    <div className="game-card flex flex-col h-full">
-      <div className="p-3 border-b border-[var(--card-border)]">
+    <div className="game-card  ">
+      <div className="p-3 border-b border-zinc-700">
         <h3 className="font-semibold text-sm">💬 Team Guesses</h3>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-[200px] max-h-[300px]">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 max-h-[300px] h-[300px]">
         {!guesses || guesses.length === 0 ? (
           <p className="text-gray-500 text-sm text-center py-4">
             {canGuess

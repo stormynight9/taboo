@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Link01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation } from "convex/react";
+import { useState } from "react";
 import { api } from "../convex/_generated/api";
 import { Doc, Id } from "../convex/_generated/dataModel";
-import { Button } from "@/components/ui/button";
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Link01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 interface LobbyProps {
   room: Doc<"rooms">;
   players: Doc<"players">[];
@@ -18,6 +18,8 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
 
   const selectTeam = useMutation(api.players.selectTeam);
   const startGame = useMutation(api.game.startGame);
+  const kickPlayer = useMutation(api.players.kickPlayer);
+  const randomizeTeams = useMutation(api.players.randomizeTeams);
 
   const currentPlayer = players.find((p) => p._id === currentPlayerId);
   const isHost = room.hostId === currentPlayerId;
@@ -45,7 +47,47 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
     await startGame({ roomId: room._id, playerId: currentPlayerId });
   };
 
-  const canStart = redTeam.length > 0 && blueTeam.length > 0;
+  const handleKickPlayer = async (targetPlayerId: Id<"players">) => {
+    if (
+      !confirm(
+        `Are you sure you want to kick ${
+          players.find((p) => p._id === targetPlayerId)?.name
+        }?`
+      )
+    ) {
+      return;
+    }
+    try {
+      await kickPlayer({
+        roomId: room._id,
+        hostPlayerId: currentPlayerId,
+        targetPlayerId,
+      });
+    } catch (error) {
+      console.error("Failed to kick player:", error);
+      alert("Failed to kick player. Please try again.");
+    }
+  };
+
+  const handleRandomizeTeams = async () => {
+    if (players.length < 2) {
+      alert("Need at least 2 players to randomize teams");
+      return;
+    }
+    try {
+      await randomizeTeams({
+        roomId: room._id,
+        hostPlayerId: currentPlayerId,
+      });
+    } catch (error) {
+      console.error("Failed to randomize teams:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to randomize teams"
+      );
+    }
+  };
+
+  const canStart = redTeam.length >= 2 && blueTeam.length >= 2;
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -63,16 +105,14 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
 
         {/* Share Link */}
         <div className="game-card p-4 md:p-6">
-          <h2 className="text-lg font-medium mb-3 text-pink-500">
-            Invite Players
-          </h2>
+          <h2 className="text-lg font-medium mb-3 ">Invite Players</h2>
           <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1 flex items-center gap-3 bg-gray-950 rounded-lg px-4 py-3.5 border border-gray-700">
+            <div className="flex-1 flex items-center gap-3 bg-zinc-900 rounded-lg px-4 py-3.5 border border-zinc-700">
               <span className="text-gray-500 text-sm truncate hidden sm:block">
                 {roomUrl}
               </span>
             </div>
-            <Button onClick={copyLink} variant="secondary">
+            <Button onClick={copyLink} variant="outline">
               {copied ? (
                 <>
                   <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} />
@@ -112,23 +152,37 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
                 redTeam.map((player) => (
                   <div
                     key={player._id}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-900 ${
-                      player._id === currentPlayerId
-                        ? "ring-2 ring-pink-500"
-                        : ""
-                    }`}
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-zinc-900"
                   >
-                    <span className="font-medium text-white">
-                      {player.name}
-                    </span>
-                    {player._id === room.hostId && (
-                      <span className="text-xs bg-pink-500 text-white px-2 py-0.5 rounded-full">
-                        Host
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="font-medium text-white truncate">
+                        {player.name}
                       </span>
-                    )}
-                    {player._id === currentPlayerId && (
-                      <span className="text-xs text-gray-400">(You)</span>
-                    )}
+                      {player._id === room.hostId && (
+                        <span
+                          className="  shrink-0 text-sm"
+                          style={{ textBox: "trim-both cap alphabetic" }}
+                        >
+                          👑
+                        </span>
+                      )}
+                      {player._id === currentPlayerId && (
+                        <span className="text-xs text-gray-400 shrink-0 ml-auto">
+                          (You)
+                        </span>
+                      )}
+                    </div>
+                    {isHost &&
+                      player._id !== currentPlayerId &&
+                      player._id !== room.hostId && (
+                        <button
+                          onClick={() => handleKickPlayer(player._id)}
+                          className="text-red-400 hover:text-red-500  shrink-0 hover:cursor-pointer"
+                          title={`Kick ${player.name}`}
+                        >
+                          Kick
+                        </button>
+                      )}
                   </div>
                 ))
               )}
@@ -168,23 +222,37 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
                 blueTeam.map((player) => (
                   <div
                     key={player._id}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg bg-gray-900 ${
-                      player._id === currentPlayerId
-                        ? "ring-2 ring-pink-500"
-                        : ""
-                    }`}
+                    className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-zinc-900"
                   >
-                    <span className="font-medium text-white">
-                      {player.name}
-                    </span>
-                    {player._id === room.hostId && (
-                      <span className="text-xs bg-pink-500 text-white px-2 py-0.5 rounded-full">
-                        Host
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <span className="font-medium text-white truncate">
+                        {player.name}
                       </span>
-                    )}
-                    {player._id === currentPlayerId && (
-                      <span className="text-xs text-gray-400">(You)</span>
-                    )}
+                      {player._id === room.hostId && (
+                        <span
+                          className="shrink-0 text-sm"
+                          style={{ textBox: "trim-both cap alphabetic" }}
+                        >
+                          👑
+                        </span>
+                      )}
+                      {player._id === currentPlayerId && (
+                        <span className="text-xs text-gray-400 shrink-0 ml-auto">
+                          (You)
+                        </span>
+                      )}
+                    </div>
+                    {isHost &&
+                      player._id !== currentPlayerId &&
+                      player._id !== room.hostId && (
+                        <button
+                          onClick={() => handleKickPlayer(player._id)}
+                          className="text-red-400 hover:text-red-500  shrink-0 hover:cursor-pointer"
+                          title={`Kick ${player.name}`}
+                        >
+                          Kick
+                        </button>
+                      )}
                   </div>
                 ))
               )}
@@ -211,27 +279,39 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
             </h3>
             <div className="flex flex-wrap gap-2">
               {noTeam.map((player) => (
-                <span
+                <div
                   key={player._id}
-                  className="px-3 py-1 bg-gray-900 rounded-full text-sm text-white"
+                  className="flex items-center gap-2 px-3 py-2 bg-zinc-900 rounded-full text-sm text-white"
                 >
-                  {player.name}
-                  {player._id === room.hostId && " 👑"}
-                </span>
+                  <span className="leading-none">
+                    {player.name}
+                    {player._id === room.hostId && " 👑"}
+                  </span>
+                </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* Start Button (Host only) */}
+        {/* Host Controls */}
         {isHost && (
-          <div className="text-center space-y-2">
-            <Button onClick={handleStartGame} disabled={!canStart} size="lg">
-              Start Game
-            </Button>
+          <div className="text-center space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={handleRandomizeTeams}
+                disabled={players.length < 2}
+                variant="outline"
+                size="lg"
+              >
+                🎲 Randomize Teams
+              </Button>
+              <Button onClick={handleStartGame} disabled={!canStart} size="lg">
+                Start Game
+              </Button>
+            </div>
             {!canStart && (
               <p className="text-gray-400 text-sm">
-                Each team needs at least one player to start
+                Each team needs at least 2 players to start
               </p>
             )}
           </div>

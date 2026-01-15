@@ -13,7 +13,7 @@ const buttonVariants = cva(
         default:
           "bg-white text-slate-700 hover:bg-slate-50 shadow-[0_4px_0_#cbd5e1] active:translate-y-[4px]",
         outline:
-          "bg-white text-slate-600 hover:bg-slate-100 shadow-[0_4px_0_#cbd5e1] active:translate-y-[4px]",
+          "text-white  shadow-[0_4px_0_#cbd5e1] active:translate-y-[4px] border-white border-2 border-solid",
         secondary:
           "bg-[#1CB0F6] text-white hover:bg-[#2BB5F7] shadow-[0_4px_0_#0DA5E6] active:translate-y-[4px]",
         ghost:
@@ -25,6 +25,7 @@ const buttonVariants = cva(
           "bg-[#58CC02] text-white hover:bg-[#5DD302] shadow-[0_4px_0_#58a700] active:translate-y-[4px]",
         warning:
           "bg-[#FFB800] text-white hover:bg-[#FFC420] shadow-[0_4px_0_#E6A500] active:translate-y-[4px]",
+        pink: "bg-pink-500 text-white hover:bg-[#ff379b] shadow-[0_4px_0_#E6509D] active:translate-y-[4px]",
       },
       size: {
         default:

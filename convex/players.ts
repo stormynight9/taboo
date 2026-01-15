@@ -97,3 +97,92 @@ export const get = query({
     return await ctx.db.get(args.playerId);
   },
 });
+
+export const kickPlayer = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    hostPlayerId: v.id("players"),
+    targetPlayerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    // Only allow kicking in lobby
+    if (room.status !== "lobby") {
+      throw new Error("Cannot kick players after game has started");
+    }
+
+    // Verify the requester is the host
+    if (room.hostId !== args.hostPlayerId) {
+      throw new Error("Only the host can kick players");
+    }
+
+    // Prevent kicking the host
+    if (args.targetPlayerId === args.hostPlayerId) {
+      throw new Error("Host cannot kick themselves");
+    }
+
+    const targetPlayer = await ctx.db.get(args.targetPlayerId);
+    if (!targetPlayer) {
+      throw new Error("Player not found");
+    }
+
+    // Verify the target player is in the same room
+    if (targetPlayer.roomId !== args.roomId) {
+      throw new Error("Player is not in this room");
+    }
+
+    // Delete the player - they will be redirected on the frontend
+    await ctx.db.delete(args.targetPlayerId);
+  },
+});
+
+export const randomizeTeams = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    hostPlayerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      throw new Error("Room not found");
+    }
+
+    // Only allow randomizing in lobby
+    if (room.status !== "lobby") {
+      throw new Error("Cannot randomize teams after game has started");
+    }
+
+    // Verify the requester is the host
+    if (room.hostId !== args.hostPlayerId) {
+      throw new Error("Only the host can randomize teams");
+    }
+
+    // Get all players in the room
+    const players = await ctx.db
+      .query("players")
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
+      .collect();
+
+    if (players.length < 2) {
+      throw new Error("Need at least 2 players to randomize teams");
+    }
+
+    // Shuffle players array (Fisher-Yates shuffle)
+    const shuffled = [...players];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Assign players alternately to red and blue teams
+    // If odd number, red team gets the extra player
+    for (let i = 0; i < shuffled.length; i++) {
+      const team = i % 2 === 0 ? "red" : "blue";
+      await ctx.db.patch(shuffled[i]._id, { team });
+    }
+  },
+});

@@ -169,26 +169,26 @@ export default function GameBoard({
         >
           {!turnStarted ? (
             isExplainer ? (
-              <p className="font-semibold text-pink-500">
+              <p className="font-medium text-pink-500">
                 ⏸️ It&apos;s your turn! Click &quot;Start Turn&quot; to begin.
               </p>
             ) : (
-              <p className="font-semibold text-white">
+              <p className="font-medium text-white">
                 ⏸️ Waiting for {explainer?.name || "the explainer"} to start the
                 turn...
               </p>
             )
           ) : isExplainer ? (
-            <p className="font-semibold text-white">
+            <p className="font-medium text-white">
               🎤 You are the EXPLAINER! Describe the word without using the
               taboo words.
             </p>
           ) : isOnCurrentTeam ? (
-            <p className="font-semibold text-white">
+            <p className="font-medium text-white">
               🎯 Your team is guessing! Type your answers in the chat.
             </p>
           ) : isOnOpposingTeam ? (
-            <p className="font-semibold text-white">
+            <p className="font-medium text-white">
               👀 Watch for taboo violations! Press the buzzer if they say a
               forbidden word.
             </p>
@@ -244,12 +244,7 @@ export default function GameBoard({
                   <p className="text-xs uppercase tracking-wider text-gray-400 mb-3">
                     Explainer Controls
                   </p>
-                  <Button
-                    onClick={handleSkip}
-                    variant="outline"
-                    size="lg"
-                    className="w-full"
-                  >
+                  <Button onClick={handleSkip} size="lg" className="w-full">
                     ⏭️ Skip Word
                   </Button>
                 </div>
@@ -272,6 +267,7 @@ export default function GameBoard({
                 playerId={currentPlayerId}
                 currentRound={room.currentRound}
                 canGuess={canGuess}
+                isExplainer={isExplainer}
               />
 
               {/* Player Lists */}

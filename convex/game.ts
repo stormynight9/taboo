@@ -55,7 +55,7 @@ export const startGame = mutation({
       throw new Error("Game has already started");
     }
 
-    // Check both teams have at least 1 player
+    // Check both teams have at least 2 players
     const players = await ctx.db
       .query("players")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
@@ -64,8 +64,8 @@ export const startGame = mutation({
     const redTeam = players.filter((p) => p.team === "red");
     const blueTeam = players.filter((p) => p.team === "blue");
 
-    if (redTeam.length === 0 || blueTeam.length === 0) {
-      throw new Error("Both teams need at least one player");
+    if (redTeam.length < 2 || blueTeam.length < 2) {
+      throw new Error("Both teams need at least 2 players");
     }
 
     // Pick first word

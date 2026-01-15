@@ -23,11 +23,11 @@ export default function WordCard({
   return (
     <div className="game-card overflow-hidden animate-slide-up">
       {/* Main Word */}
-      <div className="bg-pink-500 p-6 md:p-8 text-center">
-        <p className="text-xs uppercase tracking-wider text-gray-900 opacity-75 mb-2">
+      <div className="p-6 md:p-8 text-center border-b border-zinc-700">
+        <p className="text-xs uppercase tracking-wider text-white opacity-75 mb-2">
           Describe this word
         </p>
-        <h2 className="text-3xl md:text-4xl font-black text-gray-900">
+        <h2 className="text-3xl md:text-4xl font-semibold text-white">
           {word}
         </h2>
       </div>
