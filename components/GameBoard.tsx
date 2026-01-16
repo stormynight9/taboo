@@ -22,6 +22,7 @@ export default function GameBoard({
 }: GameBoardProps) {
   const skipWord = useMutation(api.game.skipWord);
   const startTurn = useMutation(api.game.startTurn);
+  const skipTurn = useMutation(api.game.skipTurn);
 
   const currentPlayer = players.find((p) => p._id === currentPlayerId);
 
@@ -67,6 +68,10 @@ export default function GameBoard({
 
   const handleStartTurn = async () => {
     await startTurn({ roomId: room._id, playerId: currentPlayerId });
+  };
+
+  const handleSkipTurn = async () => {
+    await skipTurn({ roomId: room._id, playerId: currentPlayerId });
   };
 
   // Check if turn has started (currentWord is not null)
@@ -180,9 +185,24 @@ export default function GameBoard({
                         : "🔵 Blue Team"}{" "}
                       - Round {room.currentRound}
                     </p>
-                    <Button onClick={handleStartTurn} size="lg">
-                      ▶️ Start Turn
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        onClick={handleStartTurn}
+                        size="lg"
+                        className="w-full"
+                      >
+                        ▶️ Start Turn
+                      </Button>
+                      <Button
+                        onClick={handleSkipTurn}
+                        variant="outline"
+                        size="lg"
+                        className="w-full"
+                      >
+                        ⏭️ Skip Turn{" "}
+                        <span className=" text-xs">(Pass to Teammate)</span>
+                      </Button>
+                    </div>
                   </div>
                 ) : (
                   <div className="game-card p-8 md:p-12 text-center max-w-md w-full">

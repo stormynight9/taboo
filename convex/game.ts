@@ -447,6 +447,79 @@ export const skipWord = mutation({
   },
 });
 
+export const skipTurn = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    playerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room || room.status !== "playing") {
+      throw new Error("Game is not in progress");
+    }
+
+    // Get current team players to find explainer
+    const teamPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_room_and_team", (q) =>
+        q.eq("roomId", args.roomId).eq("team", room.currentTeam)
+      )
+      .collect();
+
+    const sortedTeamPlayers = teamPlayers.sort(
+      (a, b) => a.joinOrder - b.joinOrder
+    );
+    const explainerIndex =
+      room.currentTeam === "red"
+        ? room.currentExplainerIndex.red
+        : room.currentExplainerIndex.blue;
+    const explainer =
+      sortedTeamPlayers[explainerIndex % sortedTeamPlayers.length];
+
+    // Only the explainer can skip their turn
+    if (!explainer || explainer._id !== args.playerId) {
+      throw new Error("Only the explainer can skip their turn");
+    }
+
+    // Cancel scheduled turn end if turn has started
+    if (room.turnScheduleId) {
+      await ctx.scheduler.cancel(room.turnScheduleId);
+    }
+
+    // Increment explainer index for current team (stays on same team)
+    const newExplainerIndex = { ...room.currentExplainerIndex };
+    if (room.currentTeam === "red") {
+      newExplainerIndex.red += 1;
+    } else {
+      newExplainerIndex.blue += 1;
+    }
+
+    // Stay on the same team - just pass to next teammate
+    // The modulo in the explainer calculation will handle wrapping around
+
+    // Log the turn skip
+    await ctx.db.insert("guesses", {
+      roomId: args.roomId,
+      playerId: args.playerId,
+      playerName: explainer.name,
+      text: `⏭️ ${explainer.name} skipped their turn`,
+      isCorrect: false,
+      round: room.currentRound,
+      timestamp: Date.now(),
+    });
+
+    // Update room state - reset turn and move to next explainer on same team
+    await ctx.db.patch(args.roomId, {
+      currentTeam: room.currentTeam, // Stay on same team
+      currentRound: room.currentRound, // Stay on same round
+      currentExplainerIndex: newExplainerIndex,
+      currentWord: null,
+      turnEndTime: null,
+      turnScheduleId: undefined,
+    });
+  },
+});
+
 export const endTurn = internalMutation({
   args: {
     roomId: v.id("rooms"),
