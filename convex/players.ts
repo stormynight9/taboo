@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { Id } from "./_generated/dataModel";
 
 export const join = mutation({
   args: {
@@ -167,17 +168,28 @@ export const randomizeTeams = mutation({
     }
 
     // Get all players in the room
-    const players = await ctx.db
+    const allPlayers = await ctx.db
       .query("players")
       .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
 
-    if (players.length < 2) {
-      throw new Error("Need at least 2 players to randomize teams");
+    // Filter to only players who are already in a team (exclude spectators)
+    const playersInTeams = allPlayers.filter(
+      (p) => p.team === "red" || p.team === "blue"
+    );
+
+    if (playersInTeams.length < 2) {
+      throw new Error("Need at least 2 players in teams to randomize");
     }
 
-    // Shuffle players array (Fisher-Yates shuffle)
-    const shuffled = [...players];
+    // Store original team assignments to check if anything changed
+    const originalTeams = new Map<Id<"players">, "red" | "blue">();
+    for (const player of playersInTeams) {
+      originalTeams.set(player._id, player.team!);
+    }
+
+    // Shuffle only players in teams (Fisher-Yates shuffle)
+    const shuffled = [...playersInTeams];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -185,9 +197,60 @@ export const randomizeTeams = mutation({
 
     // Assign players alternately to red and blue teams
     // If odd number, red team gets the extra player
+    const newAssignments = new Map<Id<"players">, "red" | "blue">();
     for (let i = 0; i < shuffled.length; i++) {
       const team = i % 2 === 0 ? "red" : "blue";
-      await ctx.db.patch(shuffled[i]._id, { team });
+      newAssignments.set(shuffled[i]._id, team);
+    }
+
+    // Check if any player's team actually changed
+    let hasChanged = false;
+    for (const player of playersInTeams) {
+      if (originalTeams.get(player._id) !== newAssignments.get(player._id)) {
+        hasChanged = true;
+        break;
+      }
+    }
+
+    // If no one changed teams, swap at least one pair to ensure change
+    if (!hasChanged && shuffled.length >= 2) {
+      // Find two players on different teams (or same team if only 2 players)
+      let player1Index = 0;
+      let player2Index = 1;
+      
+      // If we have more than 2 players, try to find players on different teams
+      if (shuffled.length > 2) {
+        const redPlayers: number[] = [];
+        const bluePlayers: number[] = [];
+        for (let i = 0; i < shuffled.length; i++) {
+          if (newAssignments.get(shuffled[i]._id) === "red") {
+            redPlayers.push(i);
+          } else {
+            bluePlayers.push(i);
+          }
+        }
+        
+        // Swap one player from red with one from blue
+        if (redPlayers.length > 0 && bluePlayers.length > 0) {
+          player1Index = redPlayers[0];
+          player2Index = bluePlayers[0];
+        }
+      }
+      
+      // Swap the teams of these two players
+      const temp = newAssignments.get(shuffled[player1Index]._id);
+      newAssignments.set(
+        shuffled[player1Index]._id,
+        newAssignments.get(shuffled[player2Index]._id)!
+      );
+      newAssignments.set(shuffled[player2Index]._id, temp!);
+    }
+
+    // Apply the new team assignments
+    // Spectators (team === null) remain unchanged
+    for (const player of shuffled) {
+      const newTeam = newAssignments.get(player._id)!;
+      await ctx.db.patch(player._id, { team: newTeam });
     }
   },
 });
