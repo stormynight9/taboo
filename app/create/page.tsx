@@ -102,7 +102,7 @@ export default function CreateRoom() {
               <Input
                 type="text"
                 required
-                maxLength={20}
+                maxLength={30}
                 placeholder="Jared"
                 value={formData.hostName}
                 onChange={(e) =>

@@ -8,6 +8,14 @@ export const join = mutation({
     sessionId: v.string(),
   },
   handler: async (ctx, args) => {
+    // Validate player name length
+    if (args.name.trim().length === 0) {
+      throw new Error("Name cannot be empty");
+    }
+    if (args.name.length > 30) {
+      throw new Error("Name must be 30 characters or less");
+    }
+
     const room = await ctx.db
       .query("rooms")
       .withIndex("by_code", (q) => q.eq("code", args.roomCode.toUpperCase()))

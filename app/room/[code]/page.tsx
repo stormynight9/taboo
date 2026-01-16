@@ -157,7 +157,7 @@ export default function RoomPage() {
               <input
                 type="text"
                 required
-                maxLength={20}
+                maxLength={30}
                 placeholder="Enter your name"
                 className="game-input w-full"
                 value={playerName}

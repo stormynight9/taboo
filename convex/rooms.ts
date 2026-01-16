@@ -21,6 +21,14 @@ export const create = mutation({
     }),
   },
   handler: async (ctx, args) => {
+    // Validate host name length
+    if (args.hostName.trim().length === 0) {
+      throw new Error("Name cannot be empty");
+    }
+    if (args.hostName.length > 30) {
+      throw new Error("Name must be 30 characters or less");
+    }
+
     // Generate unique room code
     let code = generateRoomCode();
     let existing = await ctx.db
