@@ -612,6 +612,40 @@ export const endTurn = internalMutation({
     const room = await ctx.db.get(args.roomId);
     if (!room || room.status !== "playing") return;
 
+    // Log the last word when turn ends (if there was one)
+    if (room.currentWord) {
+      // Get current explainer to log the word
+      const teamPlayers = await ctx.db
+        .query("players")
+        .withIndex("by_room_and_team", (q) =>
+          q.eq("roomId", args.roomId).eq("team", room.currentTeam)
+        )
+        .collect();
+
+      const sortedTeamPlayers = teamPlayers.sort(
+        (a, b) => a.joinOrder - b.joinOrder
+      );
+      const explainerIndex =
+        room.currentTeam === "red"
+          ? room.currentExplainerIndex.red
+          : room.currentExplainerIndex.blue;
+      const explainer =
+        sortedTeamPlayers[explainerIndex % sortedTeamPlayers.length];
+
+      if (explainer) {
+        // Log the last word of the turn
+        await ctx.db.insert("guesses", {
+          roomId: args.roomId,
+          playerId: explainer._id,
+          playerName: explainer.name,
+          text: `📋 Turn ended. Last word: "${room.currentWord.word}"`,
+          isCorrect: false,
+          round: room.currentRound,
+          timestamp: Date.now(),
+        });
+      }
+    }
+
     const nextTeam = room.currentTeam === "red" ? "blue" : "red";
     const turnsCompleted = room.currentTeam === "blue"; // Blue just finished = round complete
 
@@ -627,6 +661,7 @@ export const endTurn = internalMutation({
 
     // Check if game is over
     if (newRound > room.settings.rounds) {
+
       // Store final scores and reset to lobby
       await ctx.db.patch(args.roomId, {
         status: "lobby",

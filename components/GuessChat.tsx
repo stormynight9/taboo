@@ -110,12 +110,14 @@ export default function GuessChat({
           </p>
         ) : (
           guesses.map((g) => {
-            // Check for log messages (taboo buzzes and skips)
+            // Check for log messages (taboo buzzes, skips, and turn endings)
             const isLogMessage =
               g.text.includes("🚨") ||
               g.text.includes("⏭️") ||
+              g.text.includes("📋") ||
               g.text.includes("buzzed") ||
-              g.text.includes("skipped:");
+              g.text.includes("skipped") ||
+              g.text.includes("Turn ended");
             return (
               <div
                 key={g._id}
@@ -190,6 +192,29 @@ export default function GuessChat({
                             >
                               {playerName}
                             </span>
+                            {prefix}
+                            <span className="text-yellow-400 font-medium">
+                              {word}
+                            </span>
+                            {suffix}
+                          </>
+                        );
+                      }
+                      return g.text;
+                    })()}
+                  </span>
+                ) : isLogMessage && g.text.includes("Turn ended") ? (
+                  <span className="text-gray-300 italic">
+                    {(() => {
+                      // Parse the turn ended message to highlight the word
+                      // Format: "📋 Turn ended. Last word: "[word]""
+                      const match = g.text.match(
+                        /(📋 Turn ended\. Last word: ")([^"]+)(".*)/
+                      );
+                      if (match) {
+                        const [, prefix, word, suffix] = match;
+                        return (
+                          <>
                             {prefix}
                             <span className="text-yellow-400 font-medium">
                               {word}
