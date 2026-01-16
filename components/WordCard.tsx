@@ -31,12 +31,13 @@ export default function WordCard({
     setClickedTabooWord(tabooWord);
     try {
       await buzzTaboo({ roomId, playerId, tabooWord });
+      // Reset after successful animation
+      setTimeout(() => setClickedTabooWord(null), 500);
     } catch (err) {
       console.error("Failed to buzz:", err);
+      // Reset immediately on error so user can try again
+      setClickedTabooWord(null);
     }
-
-    // Reset after animation
-    setTimeout(() => setClickedTabooWord(null), 500);
   };
   if (!showWord) {
     return (

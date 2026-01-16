@@ -340,24 +340,39 @@ export const buzzTaboo = mutation({
       throw new Error("Invalid taboo word");
     }
 
+    // Store the word we're buzzing for (to detect race conditions)
+    const wordWeAreBuzzingFor = room.currentWord.word;
+
+    // Re-read the room right before updating to check for race conditions
+    // If the word has changed, someone else already buzzed
+    const roomCheck = await ctx.db.get(args.roomId);
+    if (
+      !roomCheck ||
+      !roomCheck.currentWord ||
+      roomCheck.currentWord.word !== wordWeAreBuzzingFor
+    ) {
+      // Word has changed, someone else already buzzed
+      throw new Error("Word has already changed - another player buzzed first");
+    }
+
     // Deduct point from current team
-    const newScores = { ...room.scores };
-    if (room.currentTeam === "red") {
+    const newScores = { ...roomCheck.scores };
+    if (roomCheck.currentTeam === "red") {
       newScores.red = Math.max(0, newScores.red - 1);
     } else {
       newScores.blue = Math.max(0, newScores.blue - 1);
     }
 
     // Get the current word before it changes (for logging)
-    const currentWord = room.currentWord.word;
+    const currentWord = roomCheck.currentWord.word;
 
     // Get new word
     const wordData = await pickRandomWord(
       ctx,
       args.roomId,
-      room.usedWordIds,
-      room.settings.tabooWordCount,
-      room.selectedPackIds ?? []
+      roomCheck.usedWordIds,
+      roomCheck.settings.tabooWordCount,
+      roomCheck.selectedPackIds ?? []
     );
 
     await ctx.db.patch(args.roomId, {
@@ -368,7 +383,7 @@ export const buzzTaboo = mutation({
       },
       usedWordIds: wordData.resetUsed
         ? [wordData.wordId]
-        : [...room.usedWordIds, wordData.wordId],
+        : [...roomCheck.usedWordIds, wordData.wordId],
     });
 
     // Log the taboo violation with the specific taboo word
