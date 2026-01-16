@@ -16,7 +16,6 @@ import {
 import { HugeiconsIcon } from "@hugeicons/react";
 import { useMutation } from "convex/react";
 import { useState, useEffect, useRef } from "react";
-import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../convex/_generated/api";
 import { Doc, Id } from "../convex/_generated/dataModel";
@@ -25,23 +24,17 @@ interface LobbyProps {
   room: Doc<"rooms">;
   players: Doc<"players">[];
   currentPlayerId: Id<"players">;
+  onBackToGame?: () => void; // Optional callback to go back to game view
 }
 
-export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
+export default function Lobby({ room, players, currentPlayerId, onBackToGame }: LobbyProps) {
   const [copied, setCopied] = useState(false);
-  const [showResultsDialog, setShowResultsDialog] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
-  const [localFinalScores, setLocalFinalScores] = useState<{
-    red: number;
-    blue: number;
-  } | null>(null);
-  const [hasClosedDialog, setHasClosedDialog] = useState(false);
 
   const selectTeam = useMutation(api.players.selectTeam);
   const startGame = useMutation(api.game.startGame);
   const kickPlayer = useMutation(api.players.kickPlayer);
   const randomizeTeams = useMutation(api.players.randomizeTeams);
-  const clearFinalScores = useMutation(api.game.clearFinalScores);
   const updateSettings = useMutation(api.rooms.updateSettings);
 
   // Settings state
@@ -81,103 +74,6 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
     }
   };
 
-  // Show dialog when final scores become available and store them locally
-  useEffect(() => {
-    if (room.finalScores && !hasClosedDialog) {
-      // Store the final scores in local state so they persist even if cleared from DB
-      // Use setTimeout to defer state update and avoid linter warning
-      const timer = setTimeout(() => {
-        setLocalFinalScores(room.finalScores!);
-        setShowResultsDialog(true);
-      }, 0);
-      return () => clearTimeout(timer);
-    } else if (!room.finalScores && !showResultsDialog) {
-      // Clear local scores when they're cleared from DB and dialog is closed
-      const timer = setTimeout(() => {
-        setLocalFinalScores(null);
-        setHasClosedDialog(false); // Reset flag when scores are cleared
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [room.finalScores, showResultsDialog, hasClosedDialog]);
-
-  // Trigger confetti when dialog opens and there's a winner
-  // Only show confetti for players on the winning team
-  useEffect(() => {
-    if (showResultsDialog && localFinalScores) {
-      const winner =
-        localFinalScores.red > localFinalScores.blue
-          ? "red"
-          : localFinalScores.blue > localFinalScores.red
-          ? "blue"
-          : null;
-
-      // Check if current player is on the winning team
-      const currentPlayer = players.find((p) => p._id === currentPlayerId);
-      const isOnWinningTeam = winner && currentPlayer?.team === winner;
-
-      if (winner && isOnWinningTeam) {
-        // Determine confetti color based on winning team
-        const colors =
-          winner === "red" ? ["#ef4444", "#dc2626"] : ["#3b82f6", "#2563eb"];
-
-        // Create confetti effect
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = {
-          startVelocity: 30,
-          spread: 360,
-          ticks: 60,
-          zIndex: 9999, // Higher than dialog z-index to appear on top
-        };
-
-        function randomInRange(min: number, max: number) {
-          return Math.random() * (max - min) + min;
-        }
-
-        const interval = setInterval(() => {
-          const timeLeft = animationEnd - Date.now();
-
-          if (timeLeft <= 0) {
-            return clearInterval(interval);
-          }
-
-          const particleCount = 50 * (timeLeft / duration);
-
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
-            colors: colors,
-          });
-          confetti({
-            ...defaults,
-            particleCount,
-            origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
-            colors: colors,
-          });
-        }, 250);
-      }
-    }
-  }, [showResultsDialog, localFinalScores, players, currentPlayerId]);
-
-  const handleCloseResultsDialog = async () => {
-    setShowResultsDialog(false);
-    setHasClosedDialog(true); // Mark that dialog was manually closed
-    // Clear final scores from the database
-    try {
-      await clearFinalScores({ roomId: room._id });
-    } catch (error) {
-      console.error("Failed to clear final scores:", error);
-    }
-  };
-
-  const handleDialogOpenChange = (open: boolean) => {
-    if (!open) {
-      // Dialog is being closed via backdrop/escape key
-      handleCloseResultsDialog();
-    }
-  };
 
   const currentPlayer = players.find((p) => p._id === currentPlayerId);
   const isHost = room.hostId === currentPlayerId;
@@ -261,61 +157,8 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
 
   const canStart = redTeam.length >= 2 && blueTeam.length >= 2;
 
-  // Determine winner from local final scores (persists even if DB is cleared)
-  const winner =
-    localFinalScores && localFinalScores.red > localFinalScores.blue
-      ? "red"
-      : localFinalScores && localFinalScores.blue > localFinalScores.red
-      ? "blue"
-      : "tie";
-
   return (
     <div className="min-h-screen p-4 md:p-8">
-      {/* Results Dialog */}
-      <Dialog open={showResultsDialog} onOpenChange={handleDialogOpenChange}>
-        <DialogContent
-          showCloseButton={false}
-          className="sm:max-w-md bg-zinc-900 border border-zinc-700 ring-0"
-        >
-          <DialogHeader>
-            <DialogTitle className="text-3xl md:text-4xl font-semibold text-center">
-              {winner === "tie" ? (
-                "It's a Tie! 🤝"
-              ) : winner === "red" ? (
-                <span className="text-red-500">Red Team Wins! 🏆</span>
-              ) : (
-                <span className="text-blue-500">Blue Team Wins! 🏆</span>
-              )}
-            </DialogTitle>
-            <div className="text-center pt-4">
-              <div className="flex items-center justify-center gap-8 mb-4">
-                <div className="text-center">
-                  <div className="text-sm text-red-500 font-semibold mb-2">
-                    RED
-                  </div>
-                  <div className="text-5xl font-semibold text-red-500">
-                    {localFinalScores?.red || 0}
-                  </div>
-                </div>
-                <span className="text-2xl text-gray-400">-</span>
-                <div className="text-center">
-                  <div className="text-sm text-blue-500 font-semibold mb-2">
-                    BLUE
-                  </div>
-                  <div className="text-5xl font-semibold text-blue-500">
-                    {localFinalScores?.blue || 0}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </DialogHeader>
-          <div className="flex justify-center pt-4">
-            <Button onClick={handleCloseResultsDialog} size="lg">
-              Back to Lobby
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
       <div className="max-w-4xl mx-auto relative z-10 space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
@@ -689,8 +532,17 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
           </div>
         )}
 
+        {/* Back to Game button - show when game is in progress and player forced lobby view */}
+        {onBackToGame && (room.status === "playing" || room.status === "finished") && (
+          <div className="text-center">
+            <Button onClick={onBackToGame} variant="outline" size="lg">
+              ← Back to Game
+            </Button>
+          </div>
+        )}
+
         {/* Host Controls */}
-        {isHost && (
+        {isHost && room.status === "lobby" && (
           <div className="text-center space-y-4">
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button

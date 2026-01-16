@@ -33,6 +33,7 @@ export default function RoomPage() {
   const [playerName, setPlayerName] = useState("");
   const [isJoining, setIsJoining] = useState(false);
   const [joinError, setJoinError] = useState("");
+  const [forceLobbyView, setForceLobbyView] = useState(false);
 
   const room = useQuery(api.rooms.getByCode, code ? { code } : "skip");
   const players = useQuery(
@@ -50,6 +51,13 @@ export default function RoomPage() {
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
   }, []);
+
+  // Reset forced lobby view when room status changes to lobby (host reset the game)
+  useEffect(() => {
+    if (room?.status === "lobby") {
+      setForceLobbyView(false);
+    }
+  }, [room?.status]);
 
   // Set player ID from existing player
   useEffect(() => {
@@ -219,14 +227,25 @@ export default function RoomPage() {
     );
   }
 
-  // Lobby or Game based on status
-  if (room.status === "lobby") {
+  // Lobby or Game based on status or forced lobby view
+  // Show lobby if: room is in lobby status OR player forced lobby view
+  if (room.status === "lobby" || forceLobbyView) {
     return (
-      <Lobby room={room} players={players} currentPlayerId={actualPlayerId} />
+      <Lobby 
+        room={room} 
+        players={players} 
+        currentPlayerId={actualPlayerId}
+        onBackToGame={forceLobbyView ? () => setForceLobbyView(false) : undefined}
+      />
     );
   }
 
   return (
-    <GameBoard room={room} players={players} currentPlayerId={actualPlayerId} />
+    <GameBoard 
+      room={room} 
+      players={players} 
+      currentPlayerId={actualPlayerId}
+      onGoToLobby={() => setForceLobbyView(true)}
+    />
   );
 }

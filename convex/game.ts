@@ -177,33 +177,14 @@ export const startGame = mutation({
       throw new Error("Both teams need at least 2 players");
     }
 
-    // Pick first word
-    const wordData = await pickRandomWord(
-      ctx,
-      args.roomId,
-      [],
-      room.settings.tabooWordCount,
-      room.selectedPackIds ?? []
-    );
-
-    const turnEndTime = Date.now() + room.settings.turnTime * 1000;
-
-    // Schedule turn end
-    const scheduleId = await ctx.scheduler.runAfter(
-      room.settings.turnTime * 1000,
-      internal.game.endTurn,
-      { roomId: args.roomId }
-    );
-
+    // Start the game but don't start the turn yet
+    // The first explainer needs to click "Start Turn" to begin
     await ctx.db.patch(args.roomId, {
       status: "playing",
-      currentWord: {
-        word: wordData.word,
-        tabooWords: wordData.tabooWords,
-      },
-      usedWordIds: [wordData.wordId],
-      turnEndTime,
-      turnScheduleId: scheduleId,
+      currentWord: null,
+      usedWordIds: [],
+      turnEndTime: null,
+      turnScheduleId: undefined,
     });
   },
 });
@@ -676,18 +657,12 @@ export const endTurn = internalMutation({
 
     // Check if game is over
     if (newRound > room.settings.rounds) {
-
-      // Store final scores and reset to lobby
+      // Store final scores and set status to finished (don't reset to lobby)
       await ctx.db.patch(args.roomId, {
-        status: "lobby",
+        status: "finished",
         finalScores: room.scores,
-        currentRound: 1,
-        currentTeam: "red",
-        currentExplainerIndex: { red: 0, blue: 0 },
         currentWord: null,
-        scores: { red: 0, blue: 0 },
         turnEndTime: null,
-        usedWordIds: [],
         turnScheduleId: undefined,
       });
       return;
@@ -834,9 +809,10 @@ export const resetToLobby = mutation({
     const room = await ctx.db.get(args.roomId);
     if (!room) throw new Error("Room not found");
 
-    // Only the host can reset to lobby
-    if (room.hostId !== args.playerId) {
-      throw new Error("Only the host can reset the game to lobby");
+    // Verify the player exists in the room
+    const player = await ctx.db.get(args.playerId);
+    if (!player || player.roomId !== args.roomId) {
+      throw new Error("Player not found in room");
     }
 
     // Cancel any scheduled turn end function if it exists
@@ -845,6 +821,7 @@ export const resetToLobby = mutation({
     }
 
     // Reset all game state back to lobby
+    // Any player can reset to lobby, but only host can start the game
     await ctx.db.patch(args.roomId, {
       status: "lobby",
       currentRound: 1,

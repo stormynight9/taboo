@@ -4,14 +4,15 @@ import { useEffect, useState } from "react";
 
 interface TimerProps {
   endTime: number | null;
+  defaultTime?: number; // Time in seconds to show when endTime is null
 }
 
-export default function Timer({ endTime }: TimerProps) {
-  const [timeLeft, setTimeLeft] = useState(0);
+export default function Timer({ endTime, defaultTime }: TimerProps) {
+  const [timeLeft, setTimeLeft] = useState(defaultTime || 0);
 
   useEffect(() => {
     if (!endTime) {
-      setTimeLeft(0);
+      setTimeLeft(defaultTime || 0);
       return;
     }
 
@@ -23,7 +24,7 @@ export default function Timer({ endTime }: TimerProps) {
     updateTimer();
     const interval = setInterval(updateTimer, 100);
     return () => clearInterval(interval);
-  }, [endTime]);
+  }, [endTime, defaultTime]);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;

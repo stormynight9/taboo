@@ -81,7 +81,7 @@ export default function WordPackSelector({
   if (packs === undefined) {
     return (
       <div className="game-card p-4">
-        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mx-auto" />
       </div>
     );
   }
