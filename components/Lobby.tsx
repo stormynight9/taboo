@@ -24,10 +24,9 @@ interface LobbyProps {
   room: Doc<"rooms">;
   players: Doc<"players">[];
   currentPlayerId: Id<"players">;
-  onBackToGame?: () => void; // Optional callback to go back to game view
 }
 
-export default function Lobby({ room, players, currentPlayerId, onBackToGame }: LobbyProps) {
+export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
   const [copied, setCopied] = useState(false);
   const [showSettingsDialog, setShowSettingsDialog] = useState(false);
 
@@ -529,15 +528,6 @@ export default function Lobby({ room, players, currentPlayerId, onBackToGame }: 
                 ))}
               </AnimatePresence>
             </div>
-          </div>
-        )}
-
-        {/* Back to Game button - show when game is in progress and player forced lobby view */}
-        {onBackToGame && (room.status === "playing" || room.status === "finished") && (
-          <div className="text-center">
-            <Button onClick={onBackToGame} variant="outline" size="lg">
-              ← Back to Game
-            </Button>
           </div>
         )}
 

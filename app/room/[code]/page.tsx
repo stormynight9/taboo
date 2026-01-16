@@ -235,7 +235,6 @@ export default function RoomPage() {
         room={room} 
         players={players} 
         currentPlayerId={actualPlayerId}
-        onBackToGame={forceLobbyView ? () => setForceLobbyView(false) : undefined}
       />
     );
   }
