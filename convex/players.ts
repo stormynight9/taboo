@@ -50,7 +50,7 @@ export const join = mutation({
 export const selectTeam = mutation({
   args: {
     playerId: v.id("players"),
-    team: v.union(v.literal("red"), v.literal("blue")),
+    team: v.union(v.literal("red"), v.literal("blue"), v.null()),
   },
   handler: async (ctx, args) => {
     const player = await ctx.db.get(args.playerId);

@@ -196,7 +196,7 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleSelectTeam = async (team: "red" | "blue") => {
+  const handleSelectTeam = async (team: "red" | "blue" | null) => {
     await selectTeam({ playerId: currentPlayerId, team });
   };
 
@@ -528,7 +528,7 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
               )}
             </div>
 
-            {currentPlayer?.team !== "red" && (
+            {currentPlayer?.team !== "red" ? (
               <Button
                 onClick={() => handleSelectTeam("red")}
                 variant="destructive"
@@ -536,6 +536,15 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
                 className="w-full"
               >
                 Join Red Team
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleSelectTeam(null)}
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                Go back to spectate
               </Button>
             )}
           </div>
@@ -598,7 +607,7 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
               )}
             </div>
 
-            {currentPlayer?.team !== "blue" && (
+            {currentPlayer?.team !== "blue" ? (
               <Button
                 onClick={() => handleSelectTeam("blue")}
                 variant="secondary"
@@ -606,6 +615,15 @@ export default function Lobby({ room, players, currentPlayerId }: LobbyProps) {
                 className="w-full"
               >
                 Join Blue Team
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleSelectTeam(null)}
+                variant="outline"
+                size="lg"
+                className="w-full"
+              >
+                Go back to spectate
               </Button>
             )}
           </div>
