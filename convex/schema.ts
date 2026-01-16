@@ -63,7 +63,9 @@ export default defineSchema({
     isCorrect: v.boolean(),
     round: v.number(),
     timestamp: v.number(),
-  }).index("by_room_and_round", ["roomId", "round"]),
+  })
+    .index("by_room", ["roomId"])
+    .index("by_room_and_round", ["roomId", "round"]),
 
   words: defineTable({
     word: v.string(),

@@ -3,7 +3,6 @@ import type { MutationCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-import type { Doc } from "./_generated/dataModel";
 
 // Helper to pick a random word that hasn't been used
 async function pickRandomWord(
@@ -13,48 +12,59 @@ async function pickRandomWord(
   tabooWordCount: number,
   selectedPackIds: Id<"packs">[]
 ) {
-  // Filter words by selected packs
-  let allWords: Doc<"words">[] = [];
+  // Optimize: First collect only word IDs to reduce bandwidth
+  let allWordIds: Id<"words">[] = [];
 
   // Handle case where selectedPackIds might be undefined (for existing rooms)
   const packIds = selectedPackIds || [];
 
   if (packIds.length === 0) {
-    // If no packs selected, get all words (fallback)
-    allWords = await ctx.db.query("words").collect();
+    // If no packs selected, get all word IDs (fallback)
+    const allWords = await ctx.db.query("words").collect();
+    allWordIds = allWords.map((w) => w._id);
   } else {
-    // Get words from selected packs
+    // Get word IDs from selected packs (more efficient than loading full documents)
     for (const packId of packIds) {
       const packWords = await ctx.db
         .query("words")
         .withIndex("by_pack", (q) => q.eq("packId", packId))
         .collect();
-      allWords = [...allWords, ...packWords];
+      allWordIds.push(...packWords.map((w) => w._id));
     }
   }
 
-  const availableWords = allWords.filter(
-    (w: Doc<"words">) => !usedWordIds.includes(w._id)
+  // Filter out used words (working with IDs is faster)
+  const availableWordIds = allWordIds.filter(
+    (id) => !usedWordIds.includes(id)
   );
 
-  if (availableWords.length === 0) {
+  let selectedWordId: Id<"words">;
+  let resetUsed = false;
+
+  if (availableWordIds.length === 0) {
     // Reset used words if we've gone through all
-    const randomWord = allWords[Math.floor(Math.random() * allWords.length)];
-    return {
-      wordId: randomWord._id,
-      word: randomWord.word,
-      tabooWords: randomWord.tabooWords.slice(0, tabooWordCount),
-      resetUsed: true,
-    };
+    selectedWordId =
+      allWordIds[Math.floor(Math.random() * allWordIds.length)];
+    resetUsed = true;
+  } else {
+    // Pick random word ID from available words
+    selectedWordId =
+      availableWordIds[
+        Math.floor(Math.random() * availableWordIds.length)
+      ];
   }
 
-  const randomWord =
-    availableWords[Math.floor(Math.random() * availableWords.length)];
+  // Only fetch the selected word document (much more efficient)
+  const randomWord = await ctx.db.get(selectedWordId);
+  if (!randomWord) {
+    throw new Error("Selected word not found");
+  }
+
   return {
     wordId: randomWord._id,
     word: randomWord.word,
     tabooWords: randomWord.tabooWords.slice(0, tabooWordCount),
-    resetUsed: false,
+    resetUsed,
   };
 }
 
@@ -520,6 +530,80 @@ export const skipTurn = mutation({
   },
 });
 
+export const skipPlayerTurnAsHost = mutation({
+  args: {
+    roomId: v.id("rooms"),
+    hostPlayerId: v.id("players"),
+  },
+  handler: async (ctx, args) => {
+    const room = await ctx.db.get(args.roomId);
+    if (!room || room.status !== "playing") {
+      throw new Error("Game is not in progress");
+    }
+
+    // Verify the requester is the host
+    if (room.hostId !== args.hostPlayerId) {
+      throw new Error("Only the host can skip a player's turn");
+    }
+
+    // Get current team players to find explainer
+    const teamPlayers = await ctx.db
+      .query("players")
+      .withIndex("by_room_and_team", (q) =>
+        q.eq("roomId", args.roomId).eq("team", room.currentTeam)
+      )
+      .collect();
+
+    const sortedTeamPlayers = teamPlayers.sort(
+      (a, b) => a.joinOrder - b.joinOrder
+    );
+    const explainerIndex =
+      room.currentTeam === "red"
+        ? room.currentExplainerIndex.red
+        : room.currentExplainerIndex.blue;
+    const explainer =
+      sortedTeamPlayers[explainerIndex % sortedTeamPlayers.length];
+
+    if (!explainer) {
+      throw new Error("No explainer found");
+    }
+
+    // Cancel scheduled turn end if turn has started
+    if (room.turnScheduleId) {
+      await ctx.scheduler.cancel(room.turnScheduleId);
+    }
+
+    // Increment explainer index for current team (stays on same team)
+    const newExplainerIndex = { ...room.currentExplainerIndex };
+    if (room.currentTeam === "red") {
+      newExplainerIndex.red += 1;
+    } else {
+      newExplainerIndex.blue += 1;
+    }
+
+    // Log the turn skip by host
+    await ctx.db.insert("guesses", {
+      roomId: args.roomId,
+      playerId: explainer._id,
+      playerName: explainer.name,
+      text: `⏭️ Host skipped ${explainer.name}'s turn`,
+      isCorrect: false,
+      round: room.currentRound,
+      timestamp: Date.now(),
+    });
+
+    // Update room state - reset turn and move to next explainer on same team
+    await ctx.db.patch(args.roomId, {
+      currentTeam: room.currentTeam, // Stay on same team
+      currentRound: room.currentRound, // Stay on same round
+      currentExplainerIndex: newExplainerIndex,
+      currentWord: null,
+      turnEndTime: null,
+      turnScheduleId: undefined,
+    });
+  },
+});
+
 export const endTurn = internalMutation({
   args: {
     roomId: v.id("rooms"),
@@ -659,16 +743,35 @@ export const getGuesses = query({
 });
 
 export const getAllGuesses = query({
-  args: { roomId: v.id("rooms") },
+  args: { 
+    roomId: v.id("rooms"),
+  },
   handler: async (ctx, args) => {
-    // Get all guesses for the room (all rounds)
-    const guesses = await ctx.db
+    // Get room to determine current round
+    const room = await ctx.db.get(args.roomId);
+    if (!room) {
+      return [];
+    }
+
+    const currentRound = room.currentRound;
+    // Show guesses from current round and previous round (if exists)
+    const roundsToShow = currentRound > 1 
+      ? [currentRound - 1, currentRound]
+      : [currentRound];
+
+    // Get guesses for the room using index for better performance
+    const allGuesses = await ctx.db
       .query("guesses")
-      .filter((q) => q.eq(q.field("roomId"), args.roomId))
+      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
       .collect();
 
+    // Filter to only current and previous round to reduce bandwidth
+    const filteredGuesses = allGuesses.filter((guess) =>
+      roundsToShow.includes(guess.round)
+    );
+
     // Sort by timestamp to show in chronological order
-    return guesses.sort((a, b) => a.timestamp - b.timestamp);
+    return filteredGuesses.sort((a, b) => a.timestamp - b.timestamp);
   },
 });
 

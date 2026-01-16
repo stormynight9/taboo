@@ -58,7 +58,7 @@ export default function GuessChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  // Get all guesses from all rounds (not just current round)
+  // Get guesses from current and previous round only (for bandwidth optimization)
   const guesses = useQuery(api.game.getAllGuesses, {
     roomId,
   });
@@ -133,7 +133,7 @@ export default function GuessChat({
                       // Parse the taboo violation message to highlight words and player name
                       // Format: "🚨 {name} buzzed "{word}" - taboo: "{tabooWord}""
                       const match = g.text.match(
-                        /(🚨 )([^ ]+)( buzzed ")([^"]+)(" - taboo: ")([^"]+)(".*)/
+                        /(🚨 )(.+?)( buzzed ")([^"]+)(" - taboo: ")([^"]+)(".*)/
                       );
                       if (match) {
                         const [

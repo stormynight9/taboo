@@ -23,8 +23,10 @@ export default function GameBoard({
   const skipWord = useMutation(api.game.skipWord);
   const startTurn = useMutation(api.game.startTurn);
   const skipTurn = useMutation(api.game.skipTurn);
+  const skipPlayerTurnAsHost = useMutation(api.game.skipPlayerTurnAsHost);
 
   const currentPlayer = players.find((p) => p._id === currentPlayerId);
+  const isHost = room.hostId === currentPlayerId;
 
   // Get current team players
   const currentTeamPlayers = players
@@ -72,6 +74,27 @@ export default function GameBoard({
 
   const handleSkipTurn = async () => {
     await skipTurn({ roomId: room._id, playerId: currentPlayerId });
+  };
+
+  const handleSkipPlayerAsHost = async () => {
+    if (
+      !confirm(
+        `Skip ${explainer?.name || "the current explainer"}'s turn? This will pass the turn to the next teammate.`
+      )
+    ) {
+      return;
+    }
+    try {
+      await skipPlayerTurnAsHost({
+        roomId: room._id,
+        hostPlayerId: currentPlayerId,
+      });
+    } catch (error) {
+      console.error("Failed to skip player turn:", error);
+      alert(
+        error instanceof Error ? error.message : "Failed to skip player turn"
+      );
+    }
   };
 
   // Check if turn has started (currentWord is not null)
@@ -210,10 +233,20 @@ export default function GameBoard({
                     <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">
                       Waiting for Turn to Start
                     </h2>
-                    <p className="text-gray-400">
+                    <p className="text-gray-400 mb-4">
                       {explainer?.name || "The explainer"} will start the turn
                       soon...
                     </p>
+                    {isHost && explainer && (
+                      <Button
+                        onClick={handleSkipPlayerAsHost}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        ⏭️ Skip {explainer.name}&apos;s Turn
+                      </Button>
+                    )}
                   </div>
                 )}
               </div>

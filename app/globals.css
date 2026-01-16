@@ -126,7 +126,7 @@ body {
 
 .team-blue {
   background: var(--blue-team);
-}
+  }
 
 .team-blue-border {
   border-color: var(--blue-team);
