@@ -21,6 +21,15 @@ export const getAll = query({
       })
     );
 
+    // Sort: default packs first, then by title
+    packsWithCounts.sort((a, b) => {
+      // Default packs come first
+      if (a.isDefault && !b.isDefault) return -1;
+      if (!a.isDefault && b.isDefault) return 1;
+      // If both are default or both are not, sort by title
+      return a.title.localeCompare(b.title);
+    });
+
     return packsWithCounts;
   },
 });
