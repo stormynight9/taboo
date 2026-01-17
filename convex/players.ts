@@ -68,8 +68,8 @@ export const selectTeam = mutation({
     }
 
     const room = await ctx.db.get(player.roomId);
-    if (!room || room.status !== "lobby") {
-      throw new Error("Cannot change team after game started");
+    if (!room || (room.status !== "lobby" && room.status !== "finished")) {
+      throw new Error("Cannot change team while game is in progress");
     }
 
     await ctx.db.patch(args.playerId, { team: args.team });
@@ -157,9 +157,9 @@ export const randomizeTeams = mutation({
       throw new Error("Room not found");
     }
 
-    // Only allow randomizing in lobby
-    if (room.status !== "lobby") {
-      throw new Error("Cannot randomize teams after game has started");
+    // Only allow randomizing in lobby or after game finished
+    if (room.status !== "lobby" && room.status !== "finished") {
+      throw new Error("Cannot randomize teams while game is in progress");
     }
 
     // Verify the requester is the host

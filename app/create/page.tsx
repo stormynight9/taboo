@@ -8,20 +8,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-
-function generateSessionId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
-function getOrCreateSessionId() {
-  if (typeof window === "undefined") return "";
-  let sessionId = localStorage.getItem("taboo_session_id");
-  if (!sessionId) {
-    sessionId = generateSessionId();
-    localStorage.setItem("taboo_session_id", sessionId);
-  }
-  return sessionId;
-}
+import { getOrCreateSessionId } from "@/lib/session";
 
 export default function CreateRoom() {
   const router = useRouter();

@@ -8,20 +8,7 @@ import { Id } from "../../../convex/_generated/dataModel";
 import Lobby from "../../../components/Lobby";
 import GameBoard from "../../../components/GameBoard";
 import { Button } from "@/components/ui/button";
-
-function generateSessionId() {
-  return Math.random().toString(36).substring(2) + Date.now().toString(36);
-}
-
-function getOrCreateSessionId() {
-  if (typeof window === "undefined") return "";
-  let sessionId = localStorage.getItem("taboo_session_id");
-  if (!sessionId) {
-    sessionId = generateSessionId();
-    localStorage.setItem("taboo_session_id", sessionId);
-  }
-  return sessionId;
-}
+import { getOrCreateSessionId } from "@/lib/session";
 
 export default function RoomPage() {
   const params = useParams();
@@ -52,9 +39,9 @@ export default function RoomPage() {
     setSessionId(getOrCreateSessionId());
   }, []);
 
-  // Reset forced lobby view when room status changes to lobby (host reset the game)
+  // Reset forced lobby view when room status changes to lobby or playing
   useEffect(() => {
-    if (room?.status === "lobby") {
+    if (room?.status === "lobby" || room?.status === "playing") {
       setForceLobbyView(false);
     }
   }, [room?.status]);
