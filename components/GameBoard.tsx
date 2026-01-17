@@ -42,6 +42,14 @@ export default function GameBoard({
     (p) => p.team !== room.currentTeam && p.team !== null
   );
 
+  // Get all players by team for end screen
+  const redTeamPlayers = players
+    .filter((p) => p.team === "red")
+    .sort((a, b) => a.joinOrder - b.joinOrder);
+  const blueTeamPlayers = players
+    .filter((p) => p.team === "blue")
+    .sort((a, b) => a.joinOrder - b.joinOrder);
+
   // Determine explainer
   const explainerIndex =
     room.currentTeam === "red"
@@ -441,21 +449,51 @@ export default function GameBoard({
                 🏆 Game Over!
               </h2>
               <div className="space-y-4 mb-4">
-                <div className="flex items-center justify-between p-4 rounded-lg bg-red-500/10 border-2 border-red-500/50">
-                  <span className="text-lg font-semibold text-white">
-                    🔴 Red Team
-                  </span>
-                  <span className="text-2xl font-bold text-red-400">
-                    {finalScores.red}
-                  </span>
+                <div className="p-4 rounded-lg bg-red-500/10 border-2 border-red-500/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-semibold text-white">
+                      🔴 Red Team
+                    </span>
+                    <span className="text-2xl font-bold text-red-400">
+                      {finalScores.red}
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-red-500/30">
+                    <div className="flex flex-wrap gap-2">
+                      {redTeamPlayers.map((p) => (
+                        <span
+                          key={p._id}
+                          className="text-sm text-gray-300 bg-red-500/20 px-2 py-1 rounded"
+                        >
+                          {p.name}
+                          {p._id === currentPlayerId && " (You)"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between p-4 rounded-lg bg-blue-500/10 border-2 border-blue-500/50">
-                  <span className="text-lg font-semibold text-white">
-                    🔵 Blue Team
-                  </span>
-                  <span className="text-2xl font-bold text-blue-400">
-                    {finalScores.blue}
-                  </span>
+                <div className="p-4 rounded-lg bg-blue-500/10 border-2 border-blue-500/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-lg font-semibold text-white">
+                      🔵 Blue Team
+                    </span>
+                    <span className="text-2xl font-bold text-blue-400">
+                      {finalScores.blue}
+                    </span>
+                  </div>
+                  <div className="mt-2 pt-2 border-t border-blue-500/30">
+                    <div className="flex flex-wrap gap-2">
+                      {blueTeamPlayers.map((p) => (
+                        <span
+                          key={p._id}
+                          className="text-sm text-gray-300 bg-blue-500/20 px-2 py-1 rounded"
+                        >
+                          {p.name}
+                          {p._id === currentPlayerId && " (You)"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 <div className="text-center pt-2">
                   <p className="text-lg font-semibold text-white">
