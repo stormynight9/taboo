@@ -33,18 +33,21 @@ export const getAllGuesses = query({
       ? [currentRound - 1, currentRound]
       : [currentRound];
 
-    // Get guesses for the room using index for better performance
-    const allGuesses = await ctx.db
-      .query("guesses")
-      .withIndex("by_room", (q) => q.eq("roomId", args.roomId))
-      .collect();
-
-    // Filter to only current and previous round to reduce bandwidth
-    const filteredGuesses = allGuesses.filter((guess) =>
-      roundsToShow.includes(guess.round)
+    // Query each round separately using the by_room_and_round index
+    // This is much more efficient than reading all guesses and filtering
+    const guessesPromises = roundsToShow.map((round) =>
+      ctx.db
+        .query("guesses")
+        .withIndex("by_room_and_round", (q) =>
+          q.eq("roomId", args.roomId).eq("round", round)
+        )
+        .collect()
     );
 
+    const guessesArrays = await Promise.all(guessesPromises);
+    const allGuesses = guessesArrays.flat();
+
     // Sort by timestamp to show in chronological order
-    return filteredGuesses.sort((a, b) => a.timestamp - b.timestamp);
+    return allGuesses.sort((a, b) => a.timestamp - b.timestamp);
   },
 });

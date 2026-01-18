@@ -136,7 +136,7 @@ export const createPackWithWords = mutation({
     ),
   },
   handler: async (ctx, args) => {
-    // Create the pack
+    // Create the pack first
     const packId = await ctx.db.insert("packs", {
       title: args.title,
       description: args.description,
@@ -144,7 +144,7 @@ export const createPackWithWords = mutation({
       emoji: args.emoji,
     });
 
-    // Insert all words
+    // Insert all words and collect their IDs
     const wordIds: Id<"words">[] = [];
     for (const wordData of args.words) {
       const wordId = await ctx.db.insert("words", {
@@ -154,6 +154,9 @@ export const createPackWithWords = mutation({
       });
       wordIds.push(wordId);
     }
+
+    // Update pack with cached word IDs for future use
+    await ctx.db.patch(packId, { wordIds });
 
     return {
       packId,
@@ -209,6 +212,42 @@ export const migrateExistingWords = mutation({
       packId: defaultPack._id,
       updatedWords: updatedCount,
       message: `Migrated ${updatedCount} words to default pack`,
+    };
+  },
+});
+
+/**
+ * Migration: Populate wordIds cache for all existing packs
+ * This should be run once after adding the wordIds field to the schema
+ */
+export const populatePackWordIds = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const allPacks = await ctx.db.query("packs").collect();
+    let updatedCount = 0;
+
+    for (const pack of allPacks) {
+      // Skip if already cached
+      if (pack.wordIds && pack.wordIds.length > 0) {
+        continue;
+      }
+
+      // Get all words for this pack
+      const packWords = await ctx.db
+        .query("words")
+        .withIndex("by_pack", (q) => q.eq("packId", pack._id))
+        .collect();
+
+      const wordIds = packWords.map((w) => w._id);
+
+      // Cache the word IDs in the pack document
+      await ctx.db.patch(pack._id, { wordIds });
+      updatedCount++;
+    }
+
+    return {
+      message: `Populated wordIds cache for ${updatedCount} packs`,
+      updatedPacks: updatedCount,
     };
   },
 });

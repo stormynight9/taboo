@@ -78,6 +78,7 @@ export default defineSchema({
     description: v.string(),
     isDefault: v.boolean(),
     emoji: v.optional(v.string()),
+    wordIds: v.optional(v.array(v.id("words"))), // Cache of word IDs for this pack
   }).index("by_isDefault", ["isDefault"]),
 });
 
