@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as cleanup from "../cleanup.js";
+import type * as crons from "../crons.js";
 import type * as game from "../game.js";
 import type * as game_chat from "../game/chat.js";
 import type * as game_fuzzyMatching from "../game/fuzzyMatching.js";
@@ -28,6 +30,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  cleanup: typeof cleanup;
+  crons: typeof crons;
   game: typeof game;
   "game/chat": typeof game_chat;
   "game/fuzzyMatching": typeof game_fuzzyMatching;

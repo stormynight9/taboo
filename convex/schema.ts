@@ -80,5 +80,30 @@ export default defineSchema({
     emoji: v.optional(v.string()),
     wordIds: v.optional(v.array(v.id("words"))), // Cache of word IDs for this pack
   }).index("by_isDefault", ["isDefault"]),
+
+  cleanup_logs: defineTable({
+    roomCode: v.string(),
+    status: v.union(
+      v.literal("lobby"),
+      v.literal("playing"),
+      v.literal("finished")
+    ),
+    createdAt: v.number(),
+    deletedAt: v.number(),
+    playerCount: v.number(),
+    guessCount: v.number(),
+    finalScores: v.optional(
+      v.object({
+        red: v.number(),
+        blue: v.number(),
+      })
+    ),
+    currentRound: v.number(),
+    settings: v.object({
+      rounds: v.number(),
+      turnTime: v.number(),
+      tabooWordCount: v.number(),
+    }),
+  }),
 });
 
